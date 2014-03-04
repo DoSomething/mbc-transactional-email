@@ -1,10 +1,10 @@
 {
-    "name": "dosomething/message-broker",
+    "name": "DoSomething/mbc-transactional-email",
     "type": "library",
     "version": "0.1.0",
-    "description": "A general collection of compoents used in teh DoSomething.org Message Broker system..",
+    "description": "A consumer app for the Message Broker system that consumes entries on the transactionalQueue. Queue payload values determine the contents of the merge_var values sent with a Mandrill API submission.",
     "keywords": ["message broker"],
-    "homepage": "https://github.com/DoSomething/message-broker",
+    "homepage": "https://github.com/DoSomething/mbc-transactional-email",
     "license" : "MIT",
     "authors": [
     {
