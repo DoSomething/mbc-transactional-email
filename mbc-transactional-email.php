@@ -1,21 +1,46 @@
 <?php
 
+  // Load up the Composer autoload magic
   require_once __DIR__ . '/vendor/autoload.php';
 
-// Use AMQP
-// use PhpAmqpLib\Connection\AMQPConnection;
-// use PhpAmqpLib\Message\AMQPMessage;
-// use MessageComposer\MessageBrokerObjectLibrary;
+  // Use AMQP
+  use PhpAmqpLib\Connection\AMQPConnection;
+  use PhpAmqpLib\Message\AMQPMessage;
 
-  $credentials = NULL;
-  $MessageBroker = new MessageBroker($credentials);
+  // Load config.inc to get application settings
+  if (!file_exists(dirname(__FILE__) . '/config.inc')) {
+    throw new Exception("Could not find config.inc.");
+  }
+  else {
+    // Use symlink to use master config.inc with:
+    // $ ln -s <path to master file>/config.inc <path where consumer or producer script lives>/config.inc
+    // in the case where a common "secret & common" config file is needed.
+    require_once(dirname(__FILE__) . '/config.inc');
+  }
+  $credentials['host'] = getenv("RABBITMQ_HOST");
+  $credentials['port'] = getenv("RABBITMQ_PORT");
+  $credentials['username'] = getenv("RABBITMQ_USERNAME");
+  $credentials['password'] = getenv("RABBITMQ_PASSWORD");
+
+  if (getenv("RABBITMQ_VHOST") != FALSE) {
+    $credentials['vhost'] = getenv("RABBITMQ_VHOST");
+  }
+  else {
+    $credentials['vhost'] = '';
+  }
+
+  // Set config vars
+  $config['transactionalExchange'] = getenv("TRANSACTIONAL_EXCHANGE");
+
+  // Load messagebroker-phplib class
+  $MessageBroker = new MessageBroker($credentials, $config);
 
   $exchangeName = getenv("TRANSACTIONAL_EXCHANGE");
-  $queueName = getenv("TRANSACTIONAL_QUEUE");
+  $queueName = 'transactionalQueue';
 
   // Confirm config.inc values set
-  if (!$exchangeName || !$queueName) {
-    throw new Exception('config.inc settings missing, exchange and/or queue name not set.');
+  if (!$exchangeName) {
+    throw new Exception('config.inc TRANSACTIONAL_EXCHANGE setting missing.');
   }
 
   // Collect RabbitMQ connection details
@@ -50,11 +75,6 @@
   //   $exclusive=false, $nowait=false, $callback=null, $ticket=null)
   $channel->basic_consume($queueName, 'transactionals', false, false, false, false, 'ConsumeCallback');
 
-  $bla = FALSE;
-if ($bla) {
-  $bla = TRUE;
-}
-
   // To see message that have not been "unack"ed.
   // $ rabbitmqctl list_queues name messages_ready messages_unacknowledged
 
@@ -77,10 +97,12 @@ if ($bla) {
  */
 function BuildMessage($payload) {
 
-$bla = FALSE;
-if ($bla) {
-  $bla = TRUE;
-}
+  // Validate payload
+  if (empty($payload->email)) {
+    trigger_error('Invalid Payload - Email address in payload is required.', E_WARNING);
+    return FALSE;
+  }
+
   $merge_vars = array();
 
   foreach ($payload->merge_vars as $varName => $varValue) {
@@ -107,8 +129,7 @@ if ($bla) {
       ),
     ),
     'tags' => array(
-      $payload->activity,
-      $payload->event_id,
+      $payload->activity
     )
   );
 
@@ -122,9 +143,11 @@ if ($bla) {
       break;
     case 'campaign-signup':
       $templateName = 'ds-campaign-signup-01';
+      $message['tags'][] = $payload->event_id;
       break;
     case 'campaign-reportback':
       $templateName = 'ds-campaign-reportback-01';
+      $message['tags'][] = $payload->event_id;
       break;
     default:
       $templateName = 'ds-message-broker-default-01';
@@ -150,10 +173,6 @@ if ($bla) {
    */
 function ConsumeCallback($payload) {
 
-$bla = FALSE;
-if ($bla) {
-  $bla = TRUE;
-}
     // Use the Mandrill service
     $Mandrill = new Mandrill();
 
@@ -164,17 +183,22 @@ if ($bla) {
     $payloadDetails = json_decode($payload->body);
     list($templateName, $templateContent, $message) = BuildMessage($payloadDetails);
 
-    echo(" [x] Built message contents...<br /><br />");
+    // Send message if no errors from building message
+    if ($templateName != FALSE) {
 
-    // Send message
-    $mandrillResults = $Mandrill->messages->sendTemplate($templateName, $templateContent, $message);
+      echo(" [x] Built message contents...<br /><br />");
 
-    $mandrillResults = print_r($mandrillResults, TRUE);
+      // Send message
+      $mandrillResults = $Mandrill->messages->sendTemplate($templateName, $templateContent, $message);
 
-    echo(" [x] Sent message via Mandrill:<br />");
-    echo($mandrillResults);
+      $mandrillResults = print_r($mandrillResults, TRUE);
 
-    echo(" [x] Done<br /><br />");
-    $payload->delivery_info['channel']->basic_ack($payload->delivery_info['delivery_tag']);
+      echo(" [x] Sent message via Mandrill:<br />");
+      echo($mandrillResults);
+
+      echo(" [x] Done<br /><br />");
+      $payload->delivery_info['channel']->basic_ack($payload->delivery_info['delivery_tag']);
+
+    }
 
 }
