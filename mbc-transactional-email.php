@@ -1,22 +1,23 @@
 <?php
+/**
+ * mbc-transactional-email.php
+ *
+ * Process entries in the transactionalQueue. Each entry will result in a call
+ * to the Mandrill API to send an email address.
+ */
 
   // Load up the Composer autoload magic
   require_once __DIR__ . '/vendor/autoload.php';
+
+  // Load configuration settings common to the Message Broker system
+  // symlinks in the project directory point to the actual location of the files
+  require('mb-secure-config.inc');
+  require('mb-config.inc');
 
   // Use AMQP
   use PhpAmqpLib\Connection\AMQPConnection;
   use PhpAmqpLib\Message\AMQPMessage;
 
-  // Load config.inc to get application settings
-  if (!file_exists(dirname(__FILE__) . '/config.inc')) {
-    throw new Exception("Could not find config.inc.");
-  }
-  else {
-    // Use symlink to use master config.inc with:
-    // $ ln -s <path to master file>/config.inc <path where consumer or producer script lives>/config.inc
-    // in the case where a common "secret & common" config file is needed.
-    require_once(dirname(__FILE__) . '/config.inc');
-  }
   $credentials['host'] = getenv("RABBITMQ_HOST");
   $credentials['port'] = getenv("RABBITMQ_PORT");
   $credentials['username'] = getenv("RABBITMQ_USERNAME");
@@ -30,28 +31,21 @@
   }
 
   // Set config vars
-  $config['transactionalExchange'] = getenv("TRANSACTIONAL_EXCHANGE");
+  $exchangeName = $config['exchange']['name'] = getenv("MB_TRANSACTIONAL_EXCHANGE");
+  $queueName = $config['queue']['name'] = getenv("MB_TRANSACTIONAL_QUEUE");
 
   // Load messagebroker-phplib class
   $MessageBroker = new MessageBroker($credentials, $config);
-
-  $exchangeName = getenv("TRANSACTIONAL_EXCHANGE");
-  $queueName = 'transactionalQueue';
-
-  // Confirm config.inc values set
-  if (!$exchangeName) {
-    throw new Exception('config.inc TRANSACTIONAL_EXCHANGE setting missing.');
-  }
 
   // Collect RabbitMQ connection details
   $connection = $MessageBroker->connection;
   $channel = $connection->channel();
 
   // Queue
-  $channel = $MessageBroker->setupQueue($queueName, $channel, NULL);
+  $channel = $MessageBroker->setupQueue($queueName, $channel);
 
   // Exchange
-  $channel = $MessageBroker->setupExchange($exchangeName, $channel);
+  $channel = $MessageBroker->setupExchange($exchangeName, 'topic', $channel);
 
   // Bind exchange to queue for 'transactional' key
   // queue_bind($queue, $exchange, $routing_key="", $nowait=false, $arguments=null, $ticket=null)
@@ -113,9 +107,9 @@ function BuildMessage($payload) {
   }
 
   $message = array(
-    'subject' => 'Test message',
     'from_email' => $payload->email,
-    'html' => '<p>this is a test message with Mandrill\'s PHP wrapper!.</p>',
+    'from_name' => $payload->merge_vars->FNAME,
+    'html' => '<p>This is a test message with Mandrill\'s PHP wrapper!.</p>',
     'to' => array(
       array(
         'email' => $payload->email,
@@ -135,18 +129,18 @@ function BuildMessage($payload) {
 
   // Select template based on payload details
   switch ($payload->activity) {
-    case 'user-register':
-      $templateName = 'ds-user-register-01';
+    case 'user_register':
+      $templateName = 'mb-general-site-signup';
       break;
-    case 'user-password-reset':
-      $templateName = 'ds-user-password-reset-01';
+    case 'user_password':
+      $templateName = 'mb-password-reset';
       break;
-    case 'campaign-signup':
-      $templateName = 'ds-campaign-signup-01';
+    case 'campaign_signup':
+      $templateName = 'mb-campaign-signup';
       $message['tags'][] = $payload->event_id;
       break;
-    case 'campaign-reportback':
-      $templateName = 'ds-campaign-reportback-01';
+    case 'campaign_reportback':
+      $templateName = 'mb-campaign-report-back';
       $message['tags'][] = $payload->event_id;
       break;
     default:
