@@ -32,7 +32,19 @@
 
   // Set config vars
   $exchangeName = $config['exchange']['name'] = getenv("MB_TRANSACTIONAL_EXCHANGE");
+  $config['exchange']['type'] = getenv("MB_TRANSACTIONAL_EXCHANGE_TYPE");
+  $config['exchange']['passive'] = getenv("MB_TRANSACTIONAL_EXCHANGE_PASSIVE");
+  $config['exchange']['durable'] = getenv("MB_TRANSACTIONAL_EXCHANGE_DURABLE");
+  $config['exchange']['auto_delete'] = getenv("MB_TRANSACTIONAL_EXCHANGE_AUTO_DELETE");
+  $config['exchange']['routing_key'] = getenv("MB_TRANSACTIONAL_EXCHANGE_ROUTING_KEY");
+
   $queueName = $config['queue']['name'] = getenv("MB_TRANSACTIONAL_QUEUE");
+  $config['queue']['passive'] = getenv("MB_TRANSACTIONAL_QUEUE_PASSIVE");
+  $config['queue']['durable'] = getenv("MB_TRANSACTIONAL_QUEUE_DURABLE");
+  $config['queue']['exclusive'] = getenv("MB_TRANSACTIONAL_QUEUE_EXCLUSIVE");
+  $config['queue']['auto_delete'] = getenv("MB_TRANSACTIONAL_QUEUE_AUTO_DELETE");
+
+  $routingKey = $config['routingKey'] = getenv("MB_USER_REGISTRATION_EXCHANGE_ROUTING_KEY");
 
   // Load messagebroker-phplib class
   $MessageBroker = new MessageBroker($credentials, $config);
@@ -67,7 +79,7 @@
   // from the worker once the task is complete.
   // basic_consume($queue="", $consumer_tag="", $no_local=false, $no_ack=false,
   //   $exclusive=false, $nowait=false, $callback=null, $ticket=null)
-  $channel->basic_consume($queueName, 'transactionals', false, false, false, false, 'ConsumeCallback');
+  $channel->basic_consume($queueName, $routingKey, false, false, false, false, 'ConsumeCallback');
 
   // To see message that have not been "unack"ed.
   // $ rabbitmqctl list_queues name messages_ready messages_unacknowledged
@@ -107,8 +119,6 @@ function BuildMessage($payload) {
   }
 
   $message = array(
-    'from_email' => $payload->email,
-    'from_name' => $payload->merge_vars->FNAME,
     'html' => '<p>This is a test message with Mandrill\'s PHP wrapper!.</p>',
     'to' => array(
       array(
@@ -130,21 +140,25 @@ function BuildMessage($payload) {
   // Select template based on payload details
   switch ($payload->activity) {
     case 'user_register':
-      $templateName = 'mb-general-site-signup';
+    case 'user-register':
+      $templateName = 'mb-general-signup';
       break;
     case 'user_password':
+    case 'user-password':
       $templateName = 'mb-password-reset';
       break;
     case 'campaign_signup':
+    case 'campaign-signup':
       $templateName = 'mb-campaign-signup';
       $message['tags'][] = $payload->event_id;
       break;
+    case 'campaign-reportback':
     case 'campaign_reportback':
       $templateName = 'mb-campaign-report-back';
       $message['tags'][] = $payload->event_id;
       break;
     default:
-      $templateName = 'ds-message-broker-default-01';
+      $templateName = 'ds-message-broker-default';
   }
 
   $templateContent = array(
