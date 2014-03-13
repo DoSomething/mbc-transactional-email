@@ -114,7 +114,7 @@ function BuildMessage($payload) {
 
   // Validate payload
   if (empty($payload->email)) {
-    trigger_error('Invalid Payload - Email address in payload is required.', E_WARNING);
+    trigger_error('Invalid Payload - Email address in payload is required.', E_USER_WARNING);
     return FALSE;
   }
 
