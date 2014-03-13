@@ -63,12 +63,16 @@
   // queue_bind($queue, $exchange, $routing_key="", $nowait=false, $arguments=null, $ticket=null)
   $channel->queue_bind($queueName, $exchangeName, '*.*.transactional');
 
-  echo ' mbc-transactional-email', "\n\n";
+  echo "\n\n";
+  echo '~~~~~~~~~~~~~~~~~~~~~~~~~', "\n";
+  echo ' mbc-transactional-email', "\n";
+  echo '~~~~~~~~~~~~~~~~~~~~~~~~~', "\n\n";
+
   echo ' [*] Queue: ' . $queueName, "\n";
   echo ' [*] Exchange: ' . $exchangeName, "\n";
   echo ' [*] Binding: *.*.transactional', "\n\n";
 
-  echo ' [*] Waiting for messages. To exit press CTRL+C', "\n";
+  echo ' [*] Waiting for messages. To exit press CTRL+C', "\n\n";
 
   // Fair dispatch
   // Don't give more than one message to a worker at a time. Don't dispatch a new
@@ -166,10 +170,12 @@ function BuildMessage($payload) {
       $templateName = 'ds-message-broker-default';
   }
 
+  // example: 'content' => 'Hi *|FIRSTNAME|* *|LASTNAME|*, thanks for signing up.'
   $templateContent = array(
     array(
         'name' => 'main',
-        'content' => 'Hi *|FIRSTNAME|* *|LASTNAME|*, thanks for signing up.'),
+        'content' => ''
+    ),
   );
 
   return array($templateName, $templateContent, $message);
