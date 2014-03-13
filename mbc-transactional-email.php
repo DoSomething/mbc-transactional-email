@@ -65,7 +65,7 @@
 
   echo ' mbc-transactional-email', "\n\n";
   echo ' [*] Queue: ' . $queueName, "\n";
-  echo ' [*] Exchange: ' . $exchangeNamee, "\n";
+  echo ' [*] Exchange: ' . $exchangeName, "\n";
   echo ' [*] Binding: *.*.transactional', "\n\n";
 
   echo ' [*] Waiting for messages. To exit press CTRL+C', "\n";
