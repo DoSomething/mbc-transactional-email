@@ -129,6 +129,8 @@ function BuildMessage($payload) {
 
   $message = array(
     'html' => '<p>This is a test message with Mandrill\'s PHP wrapper!.</p>',
+    'from_email' => 'no-reply@dosomething.org',
+    'from_name' => 'DoSomething',
     'to' => array(
       array(
         'email' => $payload->email,
@@ -195,7 +197,7 @@ function ConsumeCallback($payload) {
     // Use the Mandrill service
     $Mandrill = new Mandrill();
 
-    echo '-------------------', "\n";
+    echo '------- ' . date('D M j G:i:s:u T Y') . ' -------', "\n";
     echo ' [x] Received payload:' . $payload->body, "\n\n";
 
     // Assemble message details
