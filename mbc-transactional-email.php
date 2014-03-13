@@ -63,6 +63,11 @@
   // queue_bind($queue, $exchange, $routing_key="", $nowait=false, $arguments=null, $ticket=null)
   $channel->queue_bind($queueName, $exchangeName, '*.*.transactional');
 
+  echo ' mbc-transactional-email', "\n\n";
+  echo ' [*] Queue: ' . $queueName, "\n";
+  echo ' [*] Exchange: ' . $exchangeNamee, "\n";
+  echo ' [*] Binding: *.*.transactional', "\n\n";
+
   echo ' [*] Waiting for messages. To exit press CTRL+C', "\n";
 
   // Fair dispatch
@@ -184,7 +189,8 @@ function ConsumeCallback($payload) {
     // Use the Mandrill service
     $Mandrill = new Mandrill();
 
-    echo(" [x] Received payload: " . $payload->body . "<br /><br />");
+    echo '-------------------', "\n";
+    echo ' [x] Received payload:' . $payload->body, "\n\n";
 
     // Assemble message details
     // $payloadDetails = unserialize($payload->body);
@@ -194,18 +200,20 @@ function ConsumeCallback($payload) {
     // Send message if no errors from building message
     if ($templateName != FALSE) {
 
-      echo(" [x] Built message contents...<br /><br />");
+      echo ' [x] Built message contents...', "\n";
 
       // Send message
       $mandrillResults = $Mandrill->messages->sendTemplate($templateName, $templateContent, $message);
 
       $mandrillResults = print_r($mandrillResults, TRUE);
 
-      echo(" [x] Sent message via Mandrill:<br />");
-      echo($mandrillResults);
+      echo ' [x] Sent message via Mandrill:', "\n";
+      echo ' Returned from Mandrill: ' .$mandrillResults, "\n";
 
-      echo(" [x] Done<br /><br />");
+      echo ' [x] Done - acknowledgement with delivery tag ' . $payload->delivery_info['delivery_tag'] . ' sent. ', "\n\n";
       $payload->delivery_info['channel']->basic_ack($payload->delivery_info['delivery_tag']);
+
+      echo "\n\n";
 
     }
 
