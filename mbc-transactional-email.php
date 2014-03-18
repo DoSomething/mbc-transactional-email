@@ -38,13 +38,13 @@
   $config['exchange']['auto_delete'] = getenv("MB_TRANSACTIONAL_EXCHANGE_AUTO_DELETE");
   $config['exchange']['routing_key'] = getenv("MB_TRANSACTIONAL_EXCHANGE_ROUTING_KEY");
 
-  $queueName = $config['queue']['name'] = getenv("MB_TRANSACTIONAL_QUEUE");
-  $config['queue']['passive'] = getenv("MB_TRANSACTIONAL_QUEUE_PASSIVE");
-  $config['queue']['durable'] = getenv("MB_TRANSACTIONAL_QUEUE_DURABLE");
-  $config['queue']['exclusive'] = getenv("MB_TRANSACTIONAL_QUEUE_EXCLUSIVE");
-  $config['queue']['auto_delete'] = getenv("MB_TRANSACTIONAL_QUEUE_AUTO_DELETE");
+  $queueName = $config['queue']['transactional']['name'] = getenv("MB_TRANSACTIONAL_QUEUE");
+  $config['queue']['transactional']['passive'] = getenv("MB_TRANSACTIONAL_QUEUE_PASSIVE");
+  $config['queue']['transactional']['durable'] = getenv("MB_TRANSACTIONAL_QUEUE_DURABLE");
+  $config['queue']['transactional']['exclusive'] = getenv("MB_TRANSACTIONAL_QUEUE_EXCLUSIVE");
+  $config['queue']['transactional']['auto_delete'] = getenv("MB_TRANSACTIONAL_QUEUE_AUTO_DELETE");
 
-  $routingKey = $config['routingKey'] = getenv("MB_USER_REGISTRATION_EXCHANGE_ROUTING_KEY");
+  $routingKey = $config['routingKey']['transactional'] = getenv("MB_USER_REGISTRATION_EXCHANGE_ROUTING_KEY");
 
   // Load messagebroker-phplib class
   $MessageBroker = new MessageBroker($credentials, $config);
