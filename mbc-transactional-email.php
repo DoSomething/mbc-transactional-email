@@ -88,7 +88,8 @@
   // from the worker once the task is complete.
   // basic_consume($queue="", $consumer_tag="", $no_local=false, $no_ack=false,
   //   $exclusive=false, $nowait=false, $callback=null, $ticket=null)
-  $channel->basic_consume($queueName, $routingKey, false, false, false, false, 'ConsumeCallback');
+  // $channel->basic_consume($queueName, $routingKey, false, false, false, false, 'ConsumeCallback');
+  $channel->basic_consume($queueName, '', false, false, false, false, 'ConsumeCallback');
 
   // To see message that have not been "unack"ed.
   // $ rabbitmqctl list_queues name messages_ready messages_unacknowledged
