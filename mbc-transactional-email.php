@@ -122,6 +122,10 @@ function BuildMessage($payload) {
   $merge_vars = array();
 
   foreach ($payload->merge_vars as $varName => $varValue) {
+    // Prevent FNAME from being blank
+    if ($payload->merge_vars->FNAME == '') {
+      $payload->merge_vars->FNAME = 'friend';
+    }
     $merge_vars[] = array(
       'name' => $varName,
       'content' => $varValue
