@@ -18,33 +18,34 @@
   use PhpAmqpLib\Connection\AMQPConnection;
   use PhpAmqpLib\Message\AMQPMessage;
 
-  $credentials['host'] = getenv("RABBITMQ_HOST");
-  $credentials['port'] = getenv("RABBITMQ_PORT");
-  $credentials['username'] = getenv("RABBITMQ_USERNAME");
-  $credentials['password'] = getenv("RABBITMQ_PASSWORD");
-
-  if (getenv("RABBITMQ_VHOST") != FALSE) {
-    $credentials['vhost'] = getenv("RABBITMQ_VHOST");
-  }
-  else {
-    $credentials['vhost'] = '';
-  }
+  $credentials = array(
+    'host' =>  getenv("RABBITMQ_HOST"),
+    'port' => getenv("RABBITMQ_PORT"),
+    'username' => getenv("RABBITMQ_USERNAME"),
+    'password' => getenv("RABBITMQ_PASSWORD"),
+    'vhost' => getenv("RABBITMQ_VHOST"),
+  );
 
   // Set config vars
-  $exchangeName = $config['exchange']['name'] = getenv("MB_TRANSACTIONAL_EXCHANGE");
-  $config['exchange']['type'] = getenv("MB_TRANSACTIONAL_EXCHANGE_TYPE");
-  $config['exchange']['passive'] = getenv("MB_TRANSACTIONAL_EXCHANGE_PASSIVE");
-  $config['exchange']['durable'] = getenv("MB_TRANSACTIONAL_EXCHANGE_DURABLE");
-  $config['exchange']['auto_delete'] = getenv("MB_TRANSACTIONAL_EXCHANGE_AUTO_DELETE");
-  $config['exchange']['routing_key'] = getenv("MB_TRANSACTIONAL_EXCHANGE_ROUTING_KEY");
-
-  $queueName = $config['queue']['transactional']['name'] = getenv("MB_TRANSACTIONAL_QUEUE");
-  $config['queue']['transactional']['passive'] = getenv("MB_TRANSACTIONAL_QUEUE_PASSIVE");
-  $config['queue']['transactional']['durable'] = getenv("MB_TRANSACTIONAL_QUEUE_DURABLE");
-  $config['queue']['transactional']['exclusive'] = getenv("MB_TRANSACTIONAL_QUEUE_EXCLUSIVE");
-  $config['queue']['transactional']['auto_delete'] = getenv("MB_TRANSACTIONAL_QUEUE_AUTO_DELETE");
-
-  $routingKey = $config['routingKey']['transactional'] = getenv("MB_USER_REGISTRATION_EXCHANGE_ROUTING_KEY");
+  $config = array(
+    'exchange' => array(
+      'name' => getenv("MB_TRANSACTIONAL_EXCHANGE"),
+      'type' => getenv("MB_TRANSACTIONAL_EXCHANGE_TYPE"),
+      'passive' => getenv("MB_TRANSACTIONAL_EXCHANGE_PASSIVE"),
+      'durable' => getenv("MB_TRANSACTIONAL_EXCHANGE_DURABLE"),
+      'auto_delete' => getenv("MB_TRANSACTIONAL_EXCHANGE_AUTO_DELETE"),
+    ),
+    'queue' => array(
+      'transactional' => array(
+        'name' => getenv("MB_TRANSACTIONAL_QUEUE"),
+        'passive' => getenv("MB_TRANSACTIONAL_QUEUE_PASSIVE"),
+        'durable' => getenv("MB_TRANSACTIONAL_QUEUE_DURABLE"),
+        'exclusive' => getenv("MB_TRANSACTIONAL_QUEUE_EXCLUSIVE"),
+        'auto_delete' => getenv("MB_TRANSACTIONAL_QUEUE_AUTO_DELETE"),
+        'bindingKey' => getenv("MB_USER_REGISTRATION_EXCHANGE_ROUTING_KEY"),
+      ),
+    ),
+  );
 
   // Load messagebroker-phplib class
   $MessageBroker = new MessageBroker($credentials, $config);
@@ -54,23 +55,23 @@
   $channel = $connection->channel();
 
   // Queue
-  $channel = $MessageBroker->setupQueue($queueName, $channel);
+  list($channel, ) = $MessageBroker->setupQueue($config['queue']['transactional']['name'], $channel);
 
   // Exchange
-  $channel = $MessageBroker->setupExchange($exchangeName, 'topic', $channel);
+  $channel = $MessageBroker->setupExchange($config['exchange']['name'], $config['exchange']['type'], $channel);
 
   // Bind exchange to queue for 'transactional' key
   // queue_bind($queue, $exchange, $routing_key="", $nowait=false, $arguments=null, $ticket=null)
-  $channel->queue_bind($queueName, $exchangeName, '*.*.transactional');
+  $channel->queue_bind($config['queue']['transactional']['name'], $config['exchange']['name'], $config['queue']['transactional']['bindingKey']);
 
   echo "\n\n";
   echo '~~~~~~~~~~~~~~~~~~~~~~~~~', "\n";
   echo ' mbc-transactional-email', "\n";
   echo '~~~~~~~~~~~~~~~~~~~~~~~~~', "\n\n";
 
-  echo ' [*] Queue: ' . $queueName, "\n";
-  echo ' [*] Exchange: ' . $exchangeName, "\n";
-  echo ' [*] Binding: *.*.transactional', "\n\n";
+  echo ' [*] Queue: ' . $config['queue']['transactional']['name'], "\n";
+  echo ' [*] Exchange: ' . $config['exchange']['name'], "\n";
+  echo ' [*] Binding: ' . $config['queue']['transactional']['bindingKey'], "\n\n";
 
   echo ' [*] Waiting for messages. To exit press CTRL+C', "\n\n";
 
@@ -89,7 +90,7 @@
   // basic_consume($queue="", $consumer_tag="", $no_local=false, $no_ack=false,
   //   $exclusive=false, $nowait=false, $callback=null, $ticket=null)
   // $channel->basic_consume($queueName, $routingKey, false, false, false, false, 'ConsumeCallback');
-  $channel->basic_consume($queueName, '', false, false, false, false, 'ConsumeCallback');
+  $channel->basic_consume($config['queue']['transactional']['name'], '', false, false, false, false, 'ConsumeCallback');
 
   // To see message that have not been "unack"ed.
   // $ rabbitmqctl list_queues name messages_ready messages_unacknowledged
@@ -114,22 +115,24 @@
 function BuildMessage($payload) {
 
   // Validate payload
-  if (empty($payload->email)) {
+  if (empty($payload['email'])) {
     trigger_error('Invalid Payload - Email address in payload is required.', E_USER_WARNING);
     return FALSE;
   }
 
   $merge_vars = array();
 
-  foreach ($payload->merge_vars as $varName => $varValue) {
+  foreach ($payload['merge_vars'] as $varName => $varValue) {
     // Prevent FNAME from being blank
-    if ($payload->merge_vars->FNAME == '') {
-      $payload->merge_vars->FNAME = 'friend';
+    if ($payload['merge_vars']['FNAME'] == '') {
+      $payload['merge_vars']['FNAME'] = 'friend';
     }
-    $merge_vars[] = array(
-      'name' => $varName,
-      'content' => $varValue
-    );
+    if ($varName != 'mailchimp_group_name' && $varName != 'mailchimp_grouping_id') {
+      $merge_vars[] = array(
+        'name' => $varName,
+        'content' => $varValue
+      );
+    }
   }
 
   $message = array(
@@ -138,23 +141,23 @@ function BuildMessage($payload) {
     'from_name' => 'DoSomething',
     'to' => array(
       array(
-        'email' => $payload->email,
-        'name' => $payload->merge_vars->FNAME,
+        'email' => $payload['email'],
+        'name' => $payload['merge_vars']['FNAME'],
       )
     ),
     'merge_vars' => array(
       array(
-        'rcpt' => $payload->email,
+        'rcpt' => $payload['email'],
         'vars' => $merge_vars
       ),
     ),
     'tags' => array(
-      $payload->activity
+      $payload['activity']
     )
   );
 
   // Select template based on payload details
-  switch ($payload->activity) {
+  switch ($payload['activity']) {
     case 'user_register':
     case 'user-register':
       $templateName = 'mb-general-signup';
@@ -166,12 +169,12 @@ function BuildMessage($payload) {
     case 'campaign_signup':
     case 'campaign-signup':
       $templateName = 'mb-campaign-signup';
-      $message['tags'][] = $payload->event_id;
+      $message['tags'][] = $payload['event_id'];
       break;
     case 'campaign-reportback':
     case 'campaign_reportback':
       $templateName = 'mb-campaign-report-back';
-      $message['tags'][] = $payload->event_id;
+      $message['tags'][] = $payload['event_id'];
       break;
     default:
       $templateName = 'ds-message-broker-default';
@@ -207,7 +210,7 @@ function ConsumeCallback($payload) {
 
     // Assemble message details
     // $payloadDetails = unserialize($payload->body);
-    $payloadDetails = json_decode($payload->body);
+    $payloadDetails = unserialize($payload->body);
     list($templateName, $templateContent, $message) = BuildMessage($payloadDetails);
 
     // Send message if no errors from building message
