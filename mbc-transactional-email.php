@@ -42,7 +42,7 @@
         'durable' => getenv("MB_TRANSACTIONAL_QUEUE_DURABLE"),
         'exclusive' => getenv("MB_TRANSACTIONAL_QUEUE_EXCLUSIVE"),
         'auto_delete' => getenv("MB_TRANSACTIONAL_QUEUE_AUTO_DELETE"),
-        'bindingKey' => getenv("MB_USER_REGISTRATION_EXCHANGE_ROUTING_KEY"),
+        'bindingKey' => getenv("MB_TRANSACTIONAL_QUEUE_TOPIC_MB_TRANSACTIONAL_EXCHANGE_PATTERN"),
       ),
     ),
   );
