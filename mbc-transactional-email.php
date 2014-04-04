@@ -17,6 +17,13 @@
   // Use AMQP
   use PhpAmqpLib\Connection\AMQPConnection;
   use PhpAmqpLib\Message\AMQPMessage;
+  
+  if (extension_loaded('newrelic')) {
+    $newrelicApplication  = getenv('NEWRELIC_APP_NAME_RABBIT1');
+    $newrelicApplication .= ';' . 'mbc-transactional-email';
+    newrelic_set_appname($newrelicApplication);
+    newrelic_start_transaction($newrelicApplication);
+  }
 
   $credentials = array(
     'host' =>  getenv("RABBITMQ_HOST"),
@@ -103,6 +110,10 @@
 
   $channel->close();
   $connection->close();
+  
+  if (extension_loaded('newrelic')) {
+    newrelic_end_transaction();
+  }
 
 /*
  * BuildMessage()
