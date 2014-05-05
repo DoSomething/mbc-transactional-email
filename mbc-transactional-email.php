@@ -149,7 +149,7 @@ function BuildMessage($payload) {
   $message = array(
     'html' => '<p>This is a test message with Mandrill\'s PHP wrapper!.</p>',
     'from_email' => 'no-reply@dosomething.org',
-    'from_name' => 'DoSomething',
+    'from_name' => 'DoSomething.org',
     'to' => array(
       array(
         'email' => $payload['email'],
