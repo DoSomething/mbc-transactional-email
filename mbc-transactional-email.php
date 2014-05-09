@@ -170,19 +170,19 @@ function BuildMessage($payload) {
   // Select template based on payload details
   switch ($payload['activity']) {
     case 'user_register':
-    case 'user-register':
       $templateName = 'mb-general-signup';
       break;
     case 'user_password':
-    case 'user-password':
       $templateName = 'mb-password-reset';
       break;
     case 'campaign_signup':
-    case 'campaign-signup':
       $templateName = 'mb-campaign-signup';
       $message['tags'][] = $payload['event_id'];
       break;
-    case 'campaign-reportback':
+    case 'campaign_group_signup':
+      $templateName = 'mb-group-campaign-signup';
+      $message['tags'][] = $payload['event_id'];
+      break;
     case 'campaign_reportback':
       $templateName = 'mb-campaign-report-back';
       $message['tags'][] = $payload['event_id'];
