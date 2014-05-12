@@ -135,28 +135,28 @@ function BuildMessage($payload) {
         );
       }
     }
-  }
 
-  $message = array(
-    'html' => '<p>This is a test message with Mandrill\'s PHP wrapper!.</p>',
-    'from_email' => 'no-reply@dosomething.org',
-    'from_name' => 'DoSomething.org',
-    'to' => array(
-      array(
-        'email' => $payload['email'],
-        'name' => $payload['merge_vars']['FNAME'],
-      )
-    ),
-    'merge_vars' => array(
-      array(
-        'rcpt' => $payload['email'],
-        'vars' => $merge_vars
+    // @todo: Add support for $merge_vars being empty
+    $message = array(
+      'from_email' => 'no-reply@dosomething.org',
+      'from_name' => 'DoSomething.org',
+      'to' => array(
+        array(
+          'email' => $payload['email'],
+          'name' => $payload['merge_vars']['FNAME'],
+        )
       ),
-    ),
-    'tags' => array(
-      $payload['activity']
-    )
-  );
+      'merge_vars' => array(
+        array(
+          'rcpt' => $payload['email'],
+          'vars' => $merge_vars
+        ),
+      ),
+      'tags' => array(
+        $payload['activity']
+      )
+    );
+  }
 
   // Select template based on payload details
   switch ($payload['activity']) {
@@ -219,19 +219,26 @@ function ConsumeCallback($payload) {
     if ($templateName != FALSE) {
 
       echo ' [x] Built message contents...', "\n";
+      
+      try
+      {
 
-      // Send message
-      $mandrillResults = $Mandrill->messages->sendTemplate($templateName, $templateContent, $message);
+        // Send message
+        $mandrillResults = $Mandrill->messages->sendTemplate($templateName, $templateContent, $message);
 
-      $mandrillResults = print_r($mandrillResults, TRUE);
+        echo ' [x] Sent message via Mandrill:', "\n";
+        echo ' Returned from Mandrill: ' .$mandrillResults, "\n";
 
-      echo ' [x] Sent message via Mandrill:', "\n";
-      echo ' Returned from Mandrill: ' .$mandrillResults, "\n";
+        echo ' [x] Done - acknowledgement with delivery tag ' . $payload->delivery_info['delivery_tag'] . ' sent. ', "\n\n";
+        $payload->delivery_info['channel']->basic_ack($payload->delivery_info['delivery_tag']);
 
-      echo ' [x] Done - acknowledgement with delivery tag ' . $payload->delivery_info['delivery_tag'] . ' sent. ', "\n\n";
-      $payload->delivery_info['channel']->basic_ack($payload->delivery_info['delivery_tag']);
-
-      echo "\n\n";
+        echo "\n\n";
+        
+      }
+      catch(Exception $e) {
+        throw new Exception( 'Failed to send email through Mandrill. Returned results: ' . print_r($mandrillResults, TRUE), 0, $e);
+        $payload->delivery_info['channel']->basic_ack($payload->delivery_info['delivery_tag']);
+      }
 
     }
 
