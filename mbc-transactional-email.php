@@ -147,15 +147,11 @@ function BuildMessage($payload) {
         'content' => $varValue
       );
     }
-    $message[0]['merge_vars'] = array(
+    $message['merge_vars'][0] = array(
       'rcpt' => $payload['email'],
       'vars' => $merge_vars
     );
   }
-  
-  echo('$message: <pre>');
-  print_r($message);
-  echo('$message: </pre>');  
 
   // Select template based on payload details
   switch ($payload['activity']) {
