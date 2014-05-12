@@ -227,7 +227,7 @@ function ConsumeCallback($payload) {
         $mandrillResults = $Mandrill->messages->sendTemplate($templateName, $templateContent, $message);
 
         echo ' [x] Sent message via Mandrill:', "\n";
-        echo ' Returned from Mandrill: ' .$mandrillResults, "\n";
+        echo ' Returned from Mandrill: ' . print_r($mandrillResults, TRUE), "\n";
 
         echo ' [x] Done - acknowledgement with delivery tag ' . $payload->delivery_info['delivery_tag'] . ' sent. ', "\n\n";
         $payload->delivery_info['channel']->basic_ack($payload->delivery_info['delivery_tag']);
