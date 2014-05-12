@@ -136,7 +136,6 @@ function BuildMessage($payload) {
   );
 
   $merge_vars = array();
-
   if (isset($payload['merge_vars'])) {
     foreach ($payload['merge_vars'] as $varName => $varValue) {
       // Prevent FNAME from being blank
@@ -153,6 +152,10 @@ function BuildMessage($payload) {
       'vars' => $merge_vars
     );
   }
+  
+  echo('$message: <pre>');
+  print_r($message);
+  echo('$message: </pre>');  
 
   // Select template based on payload details
   switch ($payload['activity']) {
@@ -233,7 +236,7 @@ function ConsumeCallback($payload) {
       }
       catch(Exception $e) {
         throw new Exception( 'Failed to send email through Mandrill. Returned results: ' . print_r($mandrillResults, TRUE), 0, $e);
-        $payload->delivery_info['channel']->basic_ack($payload->delivery_info['delivery_tag']);
+        // $payload->delivery_info['channel']->basic_ack($payload->delivery_info['delivery_tag']);
       }
 
     }
