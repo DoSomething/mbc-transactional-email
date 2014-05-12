@@ -152,10 +152,6 @@ function BuildMessage($payload) {
       'vars' => $merge_vars
     );
   }
-    
-  echo('$message: <pre>');
-  print_r($message);
-  echo('$message: </pre>');
 
   // Select template based on payload details
   switch ($payload['activity']) {
