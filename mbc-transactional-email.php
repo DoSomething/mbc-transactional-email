@@ -119,42 +119,38 @@ function BuildMessage($payload) {
     trigger_error('Invalid Payload - Email address in payload is required.', E_USER_WARNING);
     return FALSE;
   }
+  
+  // @todo: Add support for $merge_vars being empty
+  $message = array(
+    'from_email' => 'no-reply@dosomething.org',
+    'from_name' => 'DoSomething.org',
+    'to' => array(
+      array(
+        'email' => $payload['email'],
+        'name' => isset($payload['merge_vars']['FNAME']) ? $payload['merge_vars']['FNAME'] : $payload['email'],
+      )
+    ),
+    'tags' => array(
+      $payload['activity']
+    )
+  );
 
   $merge_vars = array();
 
   if (isset($payload['merge_vars'])) {
     foreach ($payload['merge_vars'] as $varName => $varValue) {
       // Prevent FNAME from being blank
-      if (isset($payload['merge_vars']['FNAME']) && $payload['merge_vars']['FNAME'] == '') {
-        $payload['merge_vars']['FNAME'] = 'friend';
+      if ($varName == 'FNAME' && $varValue == '') {
+        $varValue = 'Doer';
       }
-      if ($varName != 'mailchimp_group_name' && $varName != 'mailchimp_grouping_id') {
-        $merge_vars[] = array(
-          'name' => $varName,
-          'content' => $varValue
-        );
-      }
+      $merge_vars[] = array(
+        'name' => $varName,
+        'content' => $varValue
+      );
     }
-
-    // @todo: Add support for $merge_vars being empty
-    $message = array(
-      'from_email' => 'no-reply@dosomething.org',
-      'from_name' => 'DoSomething.org',
-      'to' => array(
-        array(
-          'email' => $payload['email'],
-          'name' => $payload['merge_vars']['FNAME'],
-        )
-      ),
-      'merge_vars' => array(
-        array(
-          'rcpt' => $payload['email'],
-          'vars' => $merge_vars
-        ),
-      ),
-      'tags' => array(
-        $payload['activity']
-      )
+    $message['merge_vars'] = array(
+      'rcpt' => $payload['email'],
+      'vars' => $merge_vars
     );
   }
 
