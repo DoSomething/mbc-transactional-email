@@ -125,7 +125,7 @@ function BuildMessage($payload) {
   if (isset($payload['merge_vars'])) {
     foreach ($payload['merge_vars'] as $varName => $varValue) {
       // Prevent FNAME from being blank
-      if ($payload['merge_vars']['FNAME'] == '') {
+      if (isset($payload['merge_vars']['FNAME']) && $payload['merge_vars']['FNAME'] == '') {
         $payload['merge_vars']['FNAME'] = 'friend';
       }
       if ($varName != 'mailchimp_group_name' && $varName != 'mailchimp_grouping_id') {
