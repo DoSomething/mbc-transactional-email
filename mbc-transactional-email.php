@@ -147,7 +147,7 @@ function BuildMessage($payload) {
         'content' => $varValue
       );
     }
-    $message['merge_vars'] = array(
+    $message[0]['merge_vars'] = array(
       'rcpt' => $payload['email'],
       'vars' => $merge_vars
     );
