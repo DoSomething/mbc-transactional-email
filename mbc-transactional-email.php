@@ -68,6 +68,7 @@ class MBC_TransactionalEmail
     // Validate payload
     if (empty($payload['email'])) {
       trigger_error('Invalid Payload - Email address in payload is required.', E_USER_WARNING);
+      $this->statHat->addStatName('buildMessage: Error - email address blank.');
       return FALSE;
     }
 
@@ -151,7 +152,7 @@ class MBC_TransactionalEmail
   public function consumeTransactionalQueue($payload) {
 
     // Use the Mandrill service
-    $Mandrill = new Mandrill();
+    $mandrill = new Mandrill();
 
     // Assemble message details
     // $payloadDetails = unserialize($payload->body);
@@ -167,21 +168,17 @@ class MBC_TransactionalEmail
 
       // Log email address issues returned from Mandrill
       if (isset($mandrillResults[0]['reject_reason']) && $mandrillResults[0]['reject_reason'] != NULL) {
-        $this->statHat->clearAddedStatNames();
         $this->statHat->addStatName('Mandrill reject_reason: ' . $mandrillResults[0]['reject_reason']);
-        $this->statHat->reportCount(1);
       }
 
       // Requeue if Mandrill responds with configuration error
       if (isset($mandrillResults[0]['status']) && $mandrillResults[0]['status'] != 'error') {
         $this->messageBroker->sendAck($payload);
         $this->statHat->addStatName('consumeTransactionalQueue');
-        $this->statHat->reportCount(1);
 
         // Log activities
         $this->statHat->clearAddedStatNames();
         $this->statHat->addStatName('activity: ' . $payloadDetails['activity']);
-        $this->statHat->reportCount(1);
 
         // Track campaign signups
         if ($payloadDetails['activity'] == 'campaign_signup') {
@@ -192,12 +189,15 @@ class MBC_TransactionalEmail
           else {
             $this->statHat->addStatName('campaign_signup: Non staff pic');
           }
-          $this->statHat->reportCount(1);
+
         }
 
       }
 
     }
+
+    // All addStatName stats will be incremented by one at the end of the callback.
+    $this->statHat->reportCount(1);
 
   }
 
