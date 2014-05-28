@@ -231,11 +231,11 @@ $config = array(
     ),
   ),
   'consume' => array(
-    'consumer_tag' => getenv("MB_TRANSACTIONA_CONSUME_TAG"),
-    'no_local' => getenv("MB_TRANSACTIONA_CONSUME_NO_LOCAL"),
-    'no_ack' => getenv("MB_TRANSACTIONA_CONSUME_NO_ACK"),
-    'exclusive' => getenv("MB_TRANSACTIONA_CONSUME_EXCLUSIVE"),
-    'nowait' => getenv("MB_TRANSACTIONA_CONSUME_NOWAIT"),
+    'consumer_tag' => getenv("MB_TRANSACTIONAL_CONSUME_TAG"),
+    'no_local' => getenv("MB_TRANSACTIONAL_CONSUME_NO_LOCAL"),
+    'no_ack' => getenv("MB_TRANSACTIONAL_CONSUME_NO_ACK"),
+    'exclusive' => getenv("MB_TRANSACTIONAL_CONSUME_EXCLUSIVE"),
+    'nowait' => getenv("MB_TRANSACTIONAL_CONSUME_NOWAIT"),
   ),
 );
 $settings = array(
