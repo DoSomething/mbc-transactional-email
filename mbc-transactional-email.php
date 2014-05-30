@@ -52,7 +52,7 @@ class MBC_TransactionalEmail
 
     // Stathat
     $this->statHat = new StatHat($this->settings['stathat_ez_key'], 'mbc-transactional-email:');
-    $this->statHat->setIsProduction(FALSE);
+    $this->statHat->setIsProduction(TRUE);
   }
 
   /*
