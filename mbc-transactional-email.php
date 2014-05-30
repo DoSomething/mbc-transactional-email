@@ -163,7 +163,7 @@ class MBC_TransactionalEmail
     if ($templateName != FALSE) {
 
       // Send message
-      $mandrillResults = $Mandrill->messages->sendTemplate($templateName, $templateContent, $message);
+      $mandrillResults = $mandrill->messages->sendTemplate($templateName, $templateContent, $message);
       echo '------- mbc-transactional-email Mandrill message sent: ' . $payloadDetails['email'] . ' - ' . date('D M j G:i:s T Y') . ' -------', "\n";
 
       // Log email address issues returned from Mandrill
