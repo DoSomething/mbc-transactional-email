@@ -125,6 +125,14 @@ class MBC_TransactionalEmail
         $templateName = 'mb-campaign-report-back';
         $message['tags'][] = $payload['event_id'];
         break;
+      case 'user_welcome-niche':
+        $templateName = 'mb-user-welcome-niche-com-v1-0-0-1';
+        $message['tags'][] = 'user_welcome-niche';
+        break;
+      case 'user_password-niche':
+        $templateName = 'mb-user-signup-niche-com-v1-0-0-1';
+        $message['tags'][] = 'user_password-niche';
+        break;
       default:
         $templateName = 'ds-message-broker-default';
     }
@@ -241,6 +249,7 @@ $config = array(
 $settings = array(
   'stathat_ez_key' => getenv("STATHAT_EZKEY"),
 );
+
 
 // Kick off
 echo '------- mbc-transactional-email START: ' . date('D M j G:i:s T Y') . ' -------', "\n";
