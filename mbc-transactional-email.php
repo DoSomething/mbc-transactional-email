@@ -105,36 +105,43 @@ class MBC_TransactionalEmail
       );
     }
 
-    // Select template based on payload details
-    switch ($payload['activity']) {
-      case 'user_register':
-        $templateName = 'mb-general-signup';
-        break;
-      case 'user_password':
-        $templateName = 'mb-password-reset';
-        break;
-      case 'campaign_signup':
-        $templateName = 'mb-campaign-signup';
-        $message['tags'][] = $payload['event_id'];
-        break;
-      case 'campaign_group_signup':
-        $templateName = 'mb-group-campaign-signup';
-        $message['tags'][] = $payload['event_id'];
-        break;
-      case 'campaign_reportback':
-        $templateName = 'mb-campaign-report-back';
-        $message['tags'][] = $payload['event_id'];
-        break;
-      case 'user_welcome-niche':
-        $templateName = 'mb-user-welcome-niche-com-v1-0-0-1';
-        $message['tags'][] = 'user_welcome-niche';
-        break;
-      case 'user_password-niche':
-        $templateName = 'mb-user-signup-niche-com-v1-0-0-1';
-        $message['tags'][] = 'user_password-niche';
-        break;
-      default:
-        $templateName = 'ds-message-broker-default';
+    if (isset($payload['email-template'])) {
+      $templateName = $payload['email-template'];
+    }
+    else {
+
+      // Select template based on payload details
+      switch ($payload['activity']) {
+        case 'user_register':
+          $templateName = 'mb-general-signup';
+          break;
+        case 'user_password':
+          $templateName = 'mb-password-reset';
+          break;
+        case 'campaign_signup':
+          $templateName = 'mb-campaign-signup';
+          $message['tags'][] = $payload['event_id'];
+          break;
+        case 'campaign_group_signup':
+          $templateName = 'mb-group-campaign-signup';
+          $message['tags'][] = $payload['event_id'];
+          break;
+        case 'campaign_reportback':
+          $templateName = 'mb-campaign-report-back';
+          $message['tags'][] = $payload['event_id'];
+          break;
+        case 'user_welcome-niche':
+          $templateName = 'mb-user-welcome-niche-com-v1-0-0-1';
+          $message['tags'][] = 'user_welcome-niche';
+          break;
+        case 'user_password-niche':
+          $templateName = 'mb-user-signup-niche-com-v1-0-0-1';
+          $message['tags'][] = 'user_password-niche';
+          break;
+        default:
+          $templateName = 'ds-message-broker-default';
+      }
+
     }
 
     // example: 'content' => 'Hi *|FIRSTNAME|* *|LASTNAME|*, thanks for signing up.'
