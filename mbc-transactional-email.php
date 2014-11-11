@@ -83,7 +83,7 @@ class MBC_TransactionalEmail
         )
       ),
       'tags' => array(
-        $payload['activity']
+        $payload['email_tags']
       )
     );
 
