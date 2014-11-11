@@ -1,6 +1,7 @@
 <?php
 
 use DoSomething\MBStatTracker\StatHat;
+date_default_timezone_set("America/New_York");
 
 /**
  * mbc-transactional-email.php
