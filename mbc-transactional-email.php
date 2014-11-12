@@ -114,6 +114,7 @@ class MBC_TransactionalEmail
       $templateName = $payload['email-template'];
     }
     else {
+      print_r($payload);
       $templateName = 'ds-message-broker-default';
     }
 
