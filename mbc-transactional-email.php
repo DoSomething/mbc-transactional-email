@@ -84,7 +84,7 @@ class MBC_TransactionalEmail
         )
       ),
       'tags' => array(
-        $payload['email_tags']
+        isset($payload['email_tags']) ? $payload['email_tags'] : $payload['activity']
       )
     );
 
@@ -108,6 +108,10 @@ class MBC_TransactionalEmail
 
     if (isset($payload['email_template'])) {
       $templateName = $payload['email_template'];
+    }
+    // @todo: remove once email-template is out of code base
+    elseif (isset($payload['email-template'])) {
+      $templateName = $payload['email-template'];
     }
     else {
       $templateName = 'ds-message-broker-default';
