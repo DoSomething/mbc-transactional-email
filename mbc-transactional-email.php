@@ -73,6 +73,13 @@ class MBC_TransactionalEmail
       return FALSE;
     }
 
+    if (isset($payload['email_tags'])) {
+      $tags = $payload['email_tags'];
+    }
+    else {
+      $tags = array($payload['activity']);
+    }
+
     // @todo: Add support for $merge_vars being empty
     $message = array(
       'from_email' => 'no-reply@dosomething.org',
@@ -83,9 +90,7 @@ class MBC_TransactionalEmail
           'name' => isset($payload['merge_vars']['FNAME']) ? $payload['merge_vars']['FNAME'] : $payload['email'],
         )
       ),
-      'tags' => array(
-        isset($payload['email_tags']) ? $payload['email_tags'] : $payload['activity']
-      )
+      'tags' => $tags,
     );
 
     $merge_vars = array();
