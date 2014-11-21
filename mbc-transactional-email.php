@@ -74,11 +74,13 @@ class MBC_TransactionalEmail
       return FALSE;
     }
 
-    if (isset($payload['email_tags'])) {
+    if (is_array($payload['email_tags'])) {
       $tags = $payload['email_tags'];
     }
     else {
-      $tags = array($payload['activity']);
+      $tags = array(
+        0 => $payload['activity'],
+      );
     }
 
     // @todo: Add support for $merge_vars being empty
