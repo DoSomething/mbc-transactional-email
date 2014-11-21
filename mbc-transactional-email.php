@@ -15,8 +15,8 @@ require_once __DIR__ . '/vendor/autoload.php';
 
 // Load configuration settings common to the Message Broker system
 // symlinks in the project directory point to the actual location of the files
-require('mb-secure-config.inc');
-require('mb-config.inc');
+require_once('mb-secure-config.inc');
+require_once('mb-config.inc');
 
 class MBC_TransactionalEmail
 {
@@ -69,6 +69,7 @@ class MBC_TransactionalEmail
     // Validate payload
     if (empty($payload['email'])) {
       trigger_error('Invalid Payload - Email address in payload is required.', E_USER_WARNING);
+      echo '------- mbc-transactional-email - buildMessage ERROR, missing email: ' . print_r($payload, TRUE) . ' - ' . date('D M j G:i:s T Y') . ' -------', PHP_EOL;
       $this->statHat->addStatName('buildMessage: Error - email address blank.');
       return FALSE;
     }
@@ -158,14 +159,14 @@ class MBC_TransactionalEmail
 
       // Send message
       $mandrillResults = $mandrill->messages->sendTemplate($templateName, $templateContent, $message);
-      echo '------- mbc-transactional-email Mandrill message sent: ' . $payloadDetails['email'] . ' - ' . date('D M j G:i:s T Y') . ' -------', "\n";
+      echo '------- mbc-transactional-email Mandrill message sent: ' . $payloadDetails['email'] . ' - ' . date('D M j G:i:s T Y') . ' -------', PHP_EOL;
 
       // Log email address issues returned from Mandrill
       if (isset($mandrillResults[0]['reject_reason']) && $mandrillResults[0]['reject_reason'] != NULL) {
         $this->statHat->addStatName('Mandrill reject_reason: ' . $mandrillResults[0]['reject_reason']);
       }
 
-      // Requeue if Mandrill responds with configuration error
+      // Remove from queue if Mandrill responds without configuration error
       if (isset($mandrillResults[0]['status']) && $mandrillResults[0]['status'] != 'error') {
         $this->messageBroker->sendAck($payload);
         $this->statHat->addStatName('consumeTransactionalQueue');
@@ -187,11 +188,19 @@ class MBC_TransactionalEmail
         }
 
       }
+      else {
+        echo '------- mbc-transactional-email Mandrill message ERROR: ' . print_r($mandrillResults, TRUE) . ' - ' . date('D M j G:i:s T Y') . ' -------', PHP_EOL;
+      }
+
+      // All addStatName stats will be incremented by one at the end of the callback.
+      $this->statHat->reportCount(1);
 
     }
+    else {
+      echo '------- mbc-transactional-email - consumeTransactionalQueue - buildMessage ERROR - ' . date('D M j G:i:s T Y') . ' -------', PHP_EOL;
+      $this->messageBroker->sendAck($payload);
+    }
 
-    // All addStatName stats will be incremented by one at the end of the callback.
-    $this->statHat->reportCount(1);
 
   }
 
@@ -238,10 +247,10 @@ $settings = array(
 
 
 // Kick off
-echo '------- mbc-transactional-email START: ' . date('D M j G:i:s T Y') . ' -------', "\n";
+echo '------- mbc-transactional-email START: ' . date('D M j G:i:s T Y') . ' -------', PHP_EOL;
 
 $mb = new MessageBroker($credentials, $config);
 $mb->consumeMessage(array(new MBC_TransactionalEmail($mb, $settings), 'consumeTransactionalQueue'));
 
-echo '------- mbc-transactional-email END: ' . date('D M j G:i:s T Y') . ' -------', "\n";
+echo '------- mbc-transactional-email END: ' . date('D M j G:i:s T Y') . ' -------', PHP_EOL;
 
