@@ -74,8 +74,11 @@ class MBC_TransactionalEmail
       return FALSE;
     }
 
-    if (is_array($payload['email_tags'])) {
+    if (isset($payload['email_tags']) && is_array($payload['email_tags'])) {
       $tags = $payload['email_tags'];
+    }
+    elseif (isset($payload['tags']) && is_array($payload['tags']))  {
+      $tags = $payload['tags'];
     }
     else {
       $tags = array(
