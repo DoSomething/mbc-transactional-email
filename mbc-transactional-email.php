@@ -151,12 +151,17 @@ class MBC_TransactionalEmail
    */
   public function consumeTransactionalQueue($payload) {
 
+    echo '------- mbc-transactional-email - consumeTransactionalQueue() START -------', PHP_EOL;
+
     // Use the Mandrill service
     $mandrill = new Mandrill();
+    echo '- mandrill: ' . print_r($mandrill, TRUE), PHP_EOL;
 
     // Assemble message details
     // $payloadDetails = unserialize($payload->body);
     $payloadDetails = unserialize($payload->body);
+    echo '- payload: ' . print_r($payloadDetails, TRUE), PHP_EOL;
+
     list($templateName, $templateContent, $message) = $this->buildMessage($payloadDetails);
 
     // Send message if no errors from building message
@@ -206,7 +211,7 @@ class MBC_TransactionalEmail
       $this->messageBroker->sendAck($payload);
     }
 
-
+    echo '------- mbc-transactional-email - consumeTransactionalQueue() END -------', PHP_EOL;
   }
 
 }
@@ -255,6 +260,8 @@ $settings = array(
 echo '------- mbc-transactional-email START: ' . date('D M j G:i:s T Y') . ' -------', PHP_EOL;
 
 $mb = new MessageBroker($credentials, $config);
+echo 'Rabbit connection details: ' . print_r($mb, TRUE), PHP_EOL;
+
 $mb->consumeMessage(array(new MBC_TransactionalEmail($mb, $settings), 'consumeTransactionalQueue'));
 
 echo '------- mbc-transactional-email END: ' . date('D M j G:i:s T Y') . ' -------', PHP_EOL;
