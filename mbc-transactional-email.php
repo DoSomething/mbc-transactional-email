@@ -155,7 +155,6 @@ class MBC_TransactionalEmail
 
     // Use the Mandrill service
     $mandrill = new Mandrill();
-    echo '- mandrill: ' . print_r($mandrill, TRUE), PHP_EOL;
 
     // Assemble message details
     // $payloadDetails = unserialize($payload->body);
