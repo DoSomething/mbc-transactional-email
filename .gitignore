@@ -1,6 +1,5 @@
 # Ignore configuration files that may contain sensitive information.
-mb-config.inc
-mb-secure-config.inc
+/messagebroker-config
 
 # Ignor composer working files
 composer.phar
