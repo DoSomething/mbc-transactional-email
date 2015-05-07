@@ -12,11 +12,12 @@ date_default_timezone_set("America/New_York");
 
 // Load up the Composer autoload magic
 require_once __DIR__ . '/vendor/autoload.php';
+use DoSomething\MB_Toolbox\MB_Configuration;
 
 // Load configuration settings common to the Message Broker system
 // symlinks in the project directory point to the actual location of the files
-require_once('mb-secure-config.inc');
-require_once('mb-config.inc');
+require_once __DIR__ . '/messagebroker-config/mb-secure-config.inc';
+require_once __DIR__ . '/MBC_Image_Processor.class.inc';
 
 class MBC_TransactionalEmail
 {
@@ -54,6 +55,77 @@ class MBC_TransactionalEmail
     // Stathat
     $this->statHat = new StatHat($this->settings['stathat_ez_key'], 'mbc-transactional-email:');
     $this->statHat->setIsProduction(TRUE);
+  }
+
+  /**
+   * $callback = function()
+   *   A callback function for basic_consume() that will manage the sending of a
+   *   request to Mandrill based on the details in $payload
+   *
+   * @param string $payload
+   *  An JSON array of the details of the message to be sent
+   */
+  public function consumeTransactionalQueue($payload) {
+
+    echo '------- mbc-transactional-email - consumeTransactionalQueue() START -------', PHP_EOL;
+
+    // Use the Mandrill service
+    $mandrill = new Mandrill();
+
+    // Assemble message details
+    // $payloadDetails = unserialize($payload->body);
+    $payloadDetails = unserialize($payload->body);
+
+    list($templateName, $templateContent, $message) = $this->buildMessage($payloadDetails);
+
+    // Send message if no errors from building message
+    if ($templateName != FALSE) {
+
+      // Send message
+      $mandrillResults = $mandrill->messages->sendTemplate($templateName, $templateContent, $message);
+      echo '-> mbc-transactional-email Mandrill message sent: ' . $payloadDetails['email'] . ' - ' . date('D M j G:i:s T Y'), PHP_EOL;
+
+      // Log email address issues returned from Mandrill
+      if (isset($mandrillResults[0]['reject_reason']) && $mandrillResults[0]['reject_reason'] != NULL) {
+        $this->statHat->addStatName('Mandrill reject_reason: ' . $mandrillResults[0]['reject_reason']);
+      }
+
+      // Remove from queue if Mandrill responds without configuration error
+      if (isset($mandrillResults[0]['status']) && $mandrillResults[0]['status'] != 'error') {
+        $this->messageBroker->sendAck($payload);
+        $this->statHat->addStatName('consumeTransactionalQueue');
+
+        // Log activities
+        $this->statHat->clearAddedStatNames();
+        $this->statHat->addStatName('activity: ' . $payloadDetails['activity']);
+
+        // Track campaign signups
+        if ($payloadDetails['activity'] == 'campaign_signup') {
+          $this->statHat->clearAddedStatNames();
+          if (isset($payloadDetails['mailchimp_group_name'])) {
+            $this->statHat->addStatName('campaign_signup: ' . $payloadDetails['mailchimp_group_name']);
+          }
+          else {
+            $this->statHat->addStatName('campaign_signup: Non staff pic');
+          }
+
+        }
+
+      }
+      else {
+        echo '-> mbc-transactional-email Mandrill message ERROR: ' . print_r($mandrillResults, TRUE) . ' - ' . date('D M j G:i:s T Y'), PHP_EOL;
+      }
+
+      // All addStatName stats will be incremented by one at the end of the callback.
+      $this->statHat->reportCount(1);
+
+    }
+    else {
+      echo '------- mbc-transactional-email - consumeTransactionalQueue - buildMessage ERROR - ' . date('D M j G:i:s T Y') . ' -------', PHP_EOL;
+      $this->messageBroker->sendAck($payload);
+    }
+
+    echo '------- mbc-transactional-email - consumeTransactionalQueue() END -------', PHP_EOL;
   }
 
   /*
@@ -141,78 +213,6 @@ class MBC_TransactionalEmail
 
   }
 
-  /**
-   * $callback = function()
-   *   A callback function for basic_consume() that will manage the sending of a
-   *   request to Mandrill based on the details in $payload
-   *
-   * @param string $payload
-   *  An JSON array of the details of the message to be sent
-   */
-  public function consumeTransactionalQueue($payload) {
-
-    echo '------- mbc-transactional-email - consumeTransactionalQueue() START -------', PHP_EOL;
-
-    // Use the Mandrill service
-    $mandrill = new Mandrill();
-
-    // Assemble message details
-    // $payloadDetails = unserialize($payload->body);
-    $payloadDetails = unserialize($payload->body);
-    echo '- payload: ' . print_r($payloadDetails, TRUE), PHP_EOL;
-
-    list($templateName, $templateContent, $message) = $this->buildMessage($payloadDetails);
-
-    // Send message if no errors from building message
-    if ($templateName != FALSE) {
-
-      // Send message
-      $mandrillResults = $mandrill->messages->sendTemplate($templateName, $templateContent, $message);
-      echo '------- mbc-transactional-email Mandrill message sent: ' . $payloadDetails['email'] . ' - ' . date('D M j G:i:s T Y') . ' -------', PHP_EOL;
-
-      // Log email address issues returned from Mandrill
-      if (isset($mandrillResults[0]['reject_reason']) && $mandrillResults[0]['reject_reason'] != NULL) {
-        $this->statHat->addStatName('Mandrill reject_reason: ' . $mandrillResults[0]['reject_reason']);
-      }
-
-      // Remove from queue if Mandrill responds without configuration error
-      if (isset($mandrillResults[0]['status']) && $mandrillResults[0]['status'] != 'error') {
-        $this->messageBroker->sendAck($payload);
-        $this->statHat->addStatName('consumeTransactionalQueue');
-
-        // Log activities
-        $this->statHat->clearAddedStatNames();
-        $this->statHat->addStatName('activity: ' . $payloadDetails['activity']);
-
-        // Track campaign signups
-        if ($payloadDetails['activity'] == 'campaign_signup') {
-          $this->statHat->clearAddedStatNames();
-          if (isset($payloadDetails['mailchimp_group_name'])) {
-            $this->statHat->addStatName('campaign_signup: ' . $payloadDetails['mailchimp_group_name']);
-          }
-          else {
-            $this->statHat->addStatName('campaign_signup: Non staff pic');
-          }
-
-        }
-
-      }
-      else {
-        echo '------- mbc-transactional-email Mandrill message ERROR: ' . print_r($mandrillResults, TRUE) . ' - ' . date('D M j G:i:s T Y') . ' -------', PHP_EOL;
-      }
-
-      // All addStatName stats will be incremented by one at the end of the callback.
-      $this->statHat->reportCount(1);
-
-    }
-    else {
-      echo '------- mbc-transactional-email - consumeTransactionalQueue - buildMessage ERROR - ' . date('D M j G:i:s T Y') . ' -------', PHP_EOL;
-      $this->messageBroker->sendAck($payload);
-    }
-
-    echo '------- mbc-transactional-email - consumeTransactionalQueue() END -------', PHP_EOL;
-  }
-
 }
 
 $credentials = array(
@@ -223,44 +223,45 @@ $credentials = array(
   'vhost' => getenv("RABBITMQ_VHOST"),
 );
 
-// Set config vars
-$config = array(
-  'exchange' => array(
-    'name' => getenv("MB_TRANSACTIONAL_EXCHANGE"),
-    'type' => getenv("MB_TRANSACTIONAL_EXCHANGE_TYPE"),
-    'passive' => getenv("MB_TRANSACTIONAL_EXCHANGE_PASSIVE"),
-    'durable' => getenv("MB_TRANSACTIONAL_EXCHANGE_DURABLE"),
-    'auto_delete' => getenv("MB_TRANSACTIONAL_EXCHANGE_AUTO_DELETE"),
-  ),
-  'queue' => array(
-    'transactional' => array(
-      'name' => getenv("MB_TRANSACTIONAL_QUEUE"),
-      'passive' => getenv("MB_TRANSACTIONAL_QUEUE_PASSIVE"),
-      'durable' => getenv("MB_TRANSACTIONAL_QUEUE_DURABLE"),
-      'exclusive' => getenv("MB_TRANSACTIONAL_QUEUE_EXCLUSIVE"),
-      'auto_delete' => getenv("MB_TRANSACTIONAL_QUEUE_AUTO_DELETE"),
-      'bindingKey' => getenv("MB_TRANSACTIONAL_QUEUE_TOPIC_MB_TRANSACTIONAL_EXCHANGE_PATTERN"),
-    ),
-  ),
-  'consume' => array(
-    'consumer_tag' => getenv("MB_TRANSACTIONAL_CONSUME_TAG"),
-    'no_local' => getenv("MB_TRANSACTIONAL_CONSUME_NO_LOCAL"),
-    'no_ack' => getenv("MB_TRANSACTIONAL_CONSUME_NO_ACK"),
-    'exclusive' => getenv("MB_TRANSACTIONAL_CONSUME_EXCLUSIVE"),
-    'nowait' => getenv("MB_TRANSACTIONAL_CONSUME_NOWAIT"),
-  ),
-);
 $settings = array(
   'stathat_ez_key' => getenv("STATHAT_EZKEY"),
 );
+
+$config = array();
+$source = __DIR__ . '/messagebroker-config/mb_config.json';
+$mb_config = new MB_Configuration($source, $settings);
+$transactionalExchange = $mb_config->exchangeSettings('transactionalExchange');
+
+$config['exchange'] = array(
+  'name' => $transactionalExchange->name,
+  'type' => $transactionalExchange->type,
+  'passive' => $transactionalExchange->passive,
+  'durable' => $transactionalExchange->durable,
+  'auto_delete' => $transactionalExchange->auto_delete,
+);
+foreach ($transactionalExchange->queues->transactionalQueue->binding_patterns as $bindingCount => $bindingKey) {
+  $config['queue'][$bindingCount] = array(
+    'name' => $transactionalExchange->queues->transactionalQueue->name,
+    'passive' => $transactionalExchange->queues->transactionalQueue->passive,
+    'durable' =>  $transactionalExchange->queues->transactionalQueue->durable,
+    'exclusive' =>  $transactionalExchange->queues->transactionalQueue->exclusive,
+    'auto_delete' =>  $transactionalExchange->queues->transactionalQueue->auto_delete,
+    'bindingKey' => $bindingKey,
+  );
+  $config['consume'][$bindingCount] = array(
+    'consumer_tag' => $transactionalExchange->queues->transactionalQueue->consume->consumerTag,
+    'no_local' => $transactionalExchange->queues->transactionalQueue->consume->noLocal,
+    'no_ack' => $transactionalExchange->queues->transactionalQueue->consume->noAck,
+    'exclusive' => $transactionalExchange->queues->transactionalQueue->consume->exclusive,
+    'nowait' => $transactionalExchange->queues->transactionalQueue->consume->noWait,
+  );
+}
 
 
 // Kick off
 echo '------- mbc-transactional-email START: ' . date('D M j G:i:s T Y') . ' -------', PHP_EOL;
 
 $mb = new MessageBroker($credentials, $config);
-echo 'Rabbit connection details: ' . print_r($mb, TRUE), PHP_EOL;
-
 $mb->consumeMessage(array(new MBC_TransactionalEmail($mb, $settings), 'consumeTransactionalQueue'));
 
 echo '------- mbc-transactional-email END: ' . date('D M j G:i:s T Y') . ' -------', PHP_EOL;
