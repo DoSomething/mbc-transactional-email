@@ -17,7 +17,7 @@ use DoSomething\MB_Toolbox\MB_Configuration;
 // Load configuration settings common to the Message Broker system
 // symlinks in the project directory point to the actual location of the files
 require_once __DIR__ . '/messagebroker-config/mb-secure-config.inc';
-require_once __DIR__ . '/MBC_Image_Processor.class.inc';
+// require_once __DIR__ . '/MBC_TransactionalEmail.class.inc';
 
 class MBC_TransactionalEmail
 {
@@ -215,6 +215,7 @@ class MBC_TransactionalEmail
 
 }
 
+
 $credentials = array(
   'host' =>  getenv("RABBITMQ_HOST"),
   'port' => getenv("RABBITMQ_PORT"),
@@ -248,14 +249,14 @@ foreach ($transactionalExchange->queues->transactionalQueue->binding_patterns as
     'auto_delete' =>  $transactionalExchange->queues->transactionalQueue->auto_delete,
     'bindingKey' => $bindingKey,
   );
-  $config['consume'][$bindingCount] = array(
-    'consumer_tag' => $transactionalExchange->queues->transactionalQueue->consume->consumerTag,
-    'no_local' => $transactionalExchange->queues->transactionalQueue->consume->noLocal,
-    'no_ack' => $transactionalExchange->queues->transactionalQueue->consume->noAck,
-    'exclusive' => $transactionalExchange->queues->transactionalQueue->consume->exclusive,
-    'nowait' => $transactionalExchange->queues->transactionalQueue->consume->noWait,
-  );
 }
+
+$config['consume'] = array(
+  'no_local' => $transactionalExchange->queues->transactionalQueue->consume->no_local,
+  'no_ack' => $transactionalExchange->queues->transactionalQueue->consume->no_ack,
+  'nowait' => $transactionalExchange->queues->transactionalQueue->consume->nowait,
+  'exclusive' => $transactionalExchange->queues->transactionalQueue->consume->exclusive,
+);
 
 
 // Kick off
