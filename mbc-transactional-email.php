@@ -69,4 +69,3 @@ $mb = new MessageBroker($credentials, $config);
 $mb->consumeMessage(array(new MBC_TransactionalEmail($mb, $settings), 'consumeTransactionalQueue'));
 
 echo '------- mbc-transactional-email END: ' . date('D M j G:i:s T Y') . ' -------', PHP_EOL;
-
