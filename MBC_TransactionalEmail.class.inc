@@ -41,7 +41,7 @@ class MBC_TransactionalEmail
 
     // Stathat
     $this->statHat = new StatHat($this->settings['stathat_ez_key'], 'mbc-transactional-email:');
-    $this->statHat->setIsProduction($settings['use_stathat_tracking'] ? $settings['use_stathat_tracking'] : FALSE);
+    $this->statHat->setIsProduction(isset($settings['use_stathat_tracking']) ? $settings['use_stathat_tracking'] : FALSE);
   }
 
   /**
