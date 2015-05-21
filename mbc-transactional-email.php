@@ -1,6 +1,5 @@
 <?php
 
-use DoSomething\MBStatTracker\StatHat;
 date_default_timezone_set("America/New_York");
 
 /**
@@ -29,6 +28,7 @@ $credentials = array(
 
 $settings = array(
   'stathat_ez_key' => getenv("STATHAT_EZKEY"),
+  'use_stathat_tracking' => getenv("USE_STAT_TRACKING"),
 );
 
 $config = array();
@@ -53,7 +53,6 @@ foreach ($transactionalExchange->queues->transactionalQueue->binding_patterns as
     'bindingKey' => $bindingKey,
   );
 }
-
 $config['consume'] = array(
   'no_local' => $transactionalExchange->queues->transactionalQueue->consume->no_local,
   'no_ack' => $transactionalExchange->queues->transactionalQueue->consume->no_ack,
