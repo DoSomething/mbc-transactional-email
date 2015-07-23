@@ -184,8 +184,8 @@ class MBC_TransactionalEmail
       $templateName = $payload['email-template'];
     }
     else {
-      print_r($payload);
-      $templateName = 'ds-message-broker-default';
+      echo 'Template not defined: ' . print_r($payload, TRUE), PHP_EOL;
+      $templateName = FALSE;
     }
 
     // example: 'content' => 'Hi *|FIRSTNAME|* *|LASTNAME|*, thanks for signing up.'
