@@ -69,38 +69,45 @@ class MBC_TransactionalEmail
     if ($templateName != FALSE) {
 
       // Send message
-      $mandrillResults = $mandrill->messages->sendTemplate($templateName, $templateContent, $message);
-      echo '-> mbc-transactional-email Mandrill message sent: ' . $payloadDetails['email'] . ' - ' . date('D M j G:i:s T Y'), PHP_EOL;
+      try {
 
-      // Log email address issues returned from Mandrill
-      if (isset($mandrillResults[0]['reject_reason']) && $mandrillResults[0]['reject_reason'] != NULL) {
-        $this->statHat->addStatName('Mandrill reject_reason: ' . $mandrillResults[0]['reject_reason']);
-      }
+        $mandrillResults = $mandrill->messages->sendTemplate($templateName, $templateContent, $message);
+        echo '-> mbc-transactional-email Mandrill message sent: ' . $payloadDetails['email'] . ' - ' . date('D M j G:i:s T Y'), PHP_EOL;
 
-      // Remove from queue if Mandrill responds without configuration error
-      if (isset($mandrillResults[0]['status']) && $mandrillResults[0]['status'] != 'error') {
-        $this->messageBroker->sendAck($payload);
-        $this->statHat->addStatName('consumeTransactionalQueue');
+        // Log email address issues returned from Mandrill
+        if (isset($mandrillResults[0]['reject_reason']) && $mandrillResults[0]['reject_reason'] != NULL) {
+          $this->statHat->addStatName('Mandrill reject_reason: ' . $mandrillResults[0]['reject_reason']);
+        }
 
-        // Log activities
-        $this->statHat->clearAddedStatNames();
-        $this->statHat->addStatName('activity: ' . $payloadDetails['activity']);
+        // Remove from queue if Mandrill responds without configuration error
+        if (isset($mandrillResults[0]['status']) && $mandrillResults[0]['status'] != 'error') {
+          $this->messageBroker->sendAck($payload);
+          $this->statHat->addStatName('consumeTransactionalQueue');
 
-        // Track campaign signups
-        if ($payloadDetails['activity'] == 'campaign_signup') {
+          // Log activities
           $this->statHat->clearAddedStatNames();
-          if (isset($payloadDetails['mailchimp_group_name'])) {
-            $this->statHat->addStatName('campaign_signup: ' . $payloadDetails['mailchimp_group_name']);
-          }
-          else {
-            $this->statHat->addStatName('campaign_signup: Non staff pic');
+          $this->statHat->addStatName('activity: ' . $payloadDetails['activity']);
+
+          // Track campaign signups
+          if ($payloadDetails['activity'] == 'campaign_signup') {
+            $this->statHat->clearAddedStatNames();
+            if (isset($payloadDetails['mailchimp_group_name'])) {
+              $this->statHat->addStatName('campaign_signup: ' . $payloadDetails['mailchimp_group_name']);
+            }
+            else {
+              $this->statHat->addStatName('campaign_signup: Non staff pic');
+            }
+
           }
 
         }
+        else {
+          echo '-> mbc-transactional-email Mandrill message ERROR: ' . print_r($mandrillResults, TRUE) . ' - ' . date('D M j G:i:s T Y'), PHP_EOL;
+        }
 
       }
-      else {
-        echo '-> mbc-transactional-email Mandrill message ERROR: ' . print_r($mandrillResults, TRUE) . ' - ' . date('D M j G:i:s T Y'), PHP_EOL;
+      catch(Exception $e) {
+        echo 'Message: ' .$e->getMessage();
       }
 
       // All addStatName stats will be incremented by one at the end of the callback.
