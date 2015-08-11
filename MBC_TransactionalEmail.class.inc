@@ -108,6 +108,7 @@ class MBC_TransactionalEmail
       }
       catch(Exception $e) {
         echo 'Message: ' .$e->getMessage();
+        $this->statHat->addStatName('campaign_signup Mandrill: ERROR');
       }
 
       // All addStatName stats will be incremented by one at the end of the callback.
