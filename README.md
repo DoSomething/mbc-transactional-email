@@ -1,10 +1,22 @@
-Message Broker - Consumer
+mbc-transactional-email
 ==============
-**transactionalQueue**
+Message Broker consumer that processes messages sent to the transactionalQueue to generate transactional email messages sent via Mandrill (http://mandrill.com).
 
-- Install with:
-`php composer.phar install --no-dev`
+####Run tests:
+`./vendor/bin/phpunit tests`
 
+####Install with:
+`composer install --no-dev`
 
-[![Bitdeli Badge](https://d2weczhvl823v0.cloudfront.net/DoSomething/mbc-transactional-email/trend.png)](https://bitdeli.com/free "Bitdeli Badge")
+####Updates:
+`composer update`
+- will perform:
+  - `git update`
+  - dependency updates
+  - run tests
 
+####Documentation:
+./docs/index.html
+
+####Parallelization
+The script is configured to consume the transactionalQueue one message at a time with acknowledgements (message is removed from the queue only after the consumer sends confirmation that the message has been processed). Adding additional daemon process to consume the queue will result in parallelization for an unlimited number of consumers with a linear increase in the rate of processing.
