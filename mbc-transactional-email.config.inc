@@ -1,6 +1,10 @@
 <?php
 /**
- * Message Broker configuration settings for mbc-user-digest
+ * Message Broker configuration settings for mbc-user-digest application. The MB_Configuration class
+ * is used to create a singleton instance that can be referenced anywhere in the application for
+ * application configuration settings.
+ *
+ * @package mbc-user-digest
  */
 
 use DoSomething\MB_Toolbox\MB_Configuration;
