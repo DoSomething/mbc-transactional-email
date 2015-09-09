@@ -1,48 +1,24 @@
 <?PHP
+/**
+ * Process tranasactional email message requests. Interface to with a service to send email
+ * messages on demand based on the arrival of messages in the transactionalQueue.
+ */
 
-use DoSomething\MBStatTracker\StatHat;
+namespace DoSomething\MBC_TransactionalEmail;
+
+use DoSomething\MB_Toolbox\MB_Configuration;
+use DoSomething\StatHat\Client as StatHat;
+use DoSomething\MB_Toolbox\MB_Toolbox;
+use DoSomething\MB_Toolbox\MB_Toolbox_BaseConsumer;
+use \Exception;
 
 /**
- * MBC_TransactionalEmail class - functionality related to the Message Broker
- * producer mbc-transactional-email.
+ * MBC_Transactional_Email class - functionality related to the Message Broker
+ * producer mbc-transactional-email application. Process messages in the transactionalQueue to
+ * generate transactional email messages using the related email service.
  */
-class MBC_TransactionalEmail
+class MBC_TransactionalEmail_Consumer extends MB_Toolbox_BaseConsumer
 {
-
-  /**
-   * Message Broker connection to RabbitMQ
-   */
-  private $messageBroker;
-
-  /**
-   * Setting from external services - Mailchimp.
-   *
-   * @var array
-   */
-  private $settings;
-
-  /**
-   * Setting from external services - Mailchimp.
-   *
-   * @var array
-   */
-  private $statHat;
-
-  /**
-   * Constructor for MBC_TransactionalEmail
-   *
-   * @param array $settings
-   *   Settings from external services - StatHat
-   */
-  public function __construct($messageBroker, $settings) {
-
-    $this->messageBroker = $messageBroker;
-    $this->settings = $settings;
-
-    // Stathat
-    $this->statHat = new StatHat($this->settings['stathat_ez_key'], 'mbc-transactional-email:');
-    $this->statHat->setIsProduction(isset($settings['use_stathat_tracking']) ? $settings['use_stathat_tracking'] : FALSE);
-  }
 
   /**
    * $callback = function()
@@ -54,15 +30,40 @@ class MBC_TransactionalEmail
    */
   public function consumeTransactionalQueue($payload) {
 
-    echo '------- mbc-transactional-email - consumeTransactionalQueue() START -------', PHP_EOL;
+    echo '-------  mbc-transactional-email - MBC_TransactionalEmail_Consumer->consumeTransactionalQueue() START -------', PHP_EOL;
 
-    // Use the Mandrill service
-    $mandrill = new Mandrill();
+    parent::consumeQueue($message);
+    echo PHP_EOL . PHP_EOL;
+    echo '** Consuming: ' . $this->message['email'], PHP_EOL;
 
-    // Assemble message details
-    // $payloadDetails = unserialize($payload->body);
-    $payloadDetails = unserialize($payload->body);
+    if ($this->canProcess()) {
 
+      echo '- canProcess(): OK', PHP_EOL;
+      $setterOK = $this->setter($this->message);
+
+      // Build out user object and gather / trigger building campaign objects
+      // based on user campaign activity
+      if ($setterOK) {
+        echo '- setter(): OK', PHP_EOL;
+        $this->process();
+      }
+    }
+
+    // @todo: Throdle the number of consumers running. Based on the number of messages
+    // waiting to be processed start / stop consumers.
+    $queueMessages = parent::queueStatus('digestUserQueue');
+    echo '- queueMessages ready: ' . $queueMessages['ready'], PHP_EOL;
+    echo '- queueMessages unacked: ' . $queueMessages['unacked'], PHP_EOL;
+
+    $this->messageBroker->sendAck($this->message['payload']);
+    echo '- Ack sent: OK', PHP_EOL . PHP_EOL;
+    
+
+      
+      
+    
+    
+    
     list($templateName, $templateContent, $message) = $this->buildMessage($payloadDetails);
 
     // Send message if no errors from building message
@@ -120,26 +121,30 @@ class MBC_TransactionalEmail
       $this->messageBroker->sendAck($payload);
     }
 
-    echo '------- mbc-transactional-email - consumeTransactionalQueue() END -------', PHP_EOL;
+    echo '-------  mbc-transactional-email - MBC_TransactionalEmail_Consumer->consumeTransactionalQueue() END -------', PHP_EOL;
   }
-
-  /*
-   * BuildMessage()
-   * Assembly of message based on Mandrill API: Send-Template
-   * https://mandrillapp.com/api/docs/messages.JSON.html#method=send-template
+  
+  /**
    *
-   * @param object $payload
-   *   The email address that the message will be built for.
    */
-  private function buildMessage($payload) {
-
-    // Validate payload
+  private function canProcess() {
+    
+         // Validate payload
     if (empty($payload['email'])) {
       trigger_error('Invalid Payload - Email address in payload is required.', E_USER_WARNING);
       echo '------- mbc-transactional-email - buildMessage ERROR, missing email: ' . print_r($payload, TRUE) . ' - ' . date('D M j G:i:s T Y') . ' -------', PHP_EOL;
       $this->statHat->addStatName('buildMessage: Error - email address blank.');
       return FALSE;
     }
+
+  }
+
+  /**
+   *
+   */
+  private function setter() {
+    
+
 
     if (isset($payload['email_tags']) && is_array($payload['email_tags'])) {
       $tags = $payload['email_tags'];
@@ -204,7 +209,55 @@ class MBC_TransactionalEmail
       ),
     );
 
-    return array($templateName, $templateContent, $message);
+  }
+
+  /**
+   *
+   */
+  private function process() {
+    
+         // Send message
+      try {
+
+        $mandrillResults = $mandrill->messages->sendTemplate($templateName, $templateContent, $message);
+        echo '-> mbc-transactional-email Mandrill message sent: ' . $payloadDetails['email'] . ' - ' . date('D M j G:i:s T Y'), PHP_EOL;
+
+        // Log email address issues returned from Mandrill
+        if (isset($mandrillResults[0]['reject_reason']) && $mandrillResults[0]['reject_reason'] != NULL) {
+          $this->statHat->addStatName('Mandrill reject_reason: ' . $mandrillResults[0]['reject_reason']);
+        }
+
+        // Remove from queue if Mandrill responds without configuration error
+        if (isset($mandrillResults[0]['status']) && $mandrillResults[0]['status'] != 'error') {
+          $this->messageBroker->sendAck($payload);
+          $this->statHat->addStatName('consumeTransactionalQueue');
+
+          // Log activities
+          $this->statHat->clearAddedStatNames();
+          $this->statHat->addStatName('activity: ' . $payloadDetails['activity']);
+
+          // Track campaign signups
+          if ($payloadDetails['activity'] == 'campaign_signup') {
+            $this->statHat->clearAddedStatNames();
+            if (isset($payloadDetails['mailchimp_group_name'])) {
+              $this->statHat->addStatName('campaign_signup: ' . $payloadDetails['mailchimp_group_name']);
+            }
+            else {
+              $this->statHat->addStatName('campaign_signup: Non staff pic');
+            }
+
+          }
+
+        }
+        else {
+          echo '-> mbc-transactional-email Mandrill message ERROR: ' . print_r($mandrillResults, TRUE) . ' - ' . date('D M j G:i:s T Y'), PHP_EOL;
+        }
+
+      }
+      catch(Exception $e) {
+        echo 'Message: ' .$e->getMessage();
+        $this->statHat->addStatName('campaign_signup Mandrill: ERROR');
+      }
 
   }
 
