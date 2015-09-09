@@ -1,25 +1,47 @@
 {
-    "name": "DoSomething/mbc-transactional-email",
-    "type": "project",
-    "version": "0.2.0",
-    "description": "A consumer app for the Message Broker system that consumes entries on the transactionalQueue. Queue payload values determine the contents of the merge_var values sent with the Mandrill API submission to dispatch an email message.",
-    "keywords": ["message broker"],
-    "homepage": "https://github.com/DoSomething/mbc-transactional-email",
-    "license" : "MIT",
-    "authors": [
-    {
-      "name": "DoSomething and contributors",
-      "homepage": "http://www.dosomething.org"
-    }
+  "name": "mbc-transactional-email",
+  "type": "project",
+  "version": "0.3.0",
+  "description": "A consumer app for the Message Broker system that consumes entries on the transactionalQueue. Queue payload values determine the contents of the merge_var values sent with the Mandrill API submission to dispatch an email message.",
+  "keywords": ["message broker", "email", "mandrill"],
+  "homepage": "https://github.com/DoSomething/mbc-transactional-email",
+  "license" : "MIT",
+  "authors":
+    [
+      {
+        "name": "DoSomething and contributors",
+        "homepage": "http://www.dosomething.org"
+      }
     ],
-    "require": {
-        "php": ">= 5.3.0",
-        "DoSomething/messagebroker-phplib": "0.2.*",
-        "dosomething/mb-toolbox": "0.4.*",
-        "dosomething/mb-stat-tracker": "v0.0.3",
-        "mandrill/mandrill": "1.0.50"
-    },
-    "require-dev": {
-      "phpunit/phpunit": "3.7.*"
+  "require":
+  {
+    "php": ">= 5.3.0",
+    "DoSomething/messagebroker-phplib": "0.2.*",
+    "dosomething/mb-toolbox": "0.7.*",
+    "dosomething/stathat": "1.*",
+    "mandrill/mandrill": "1.0.*"
+  },
+  "require-dev": {
+    "phpunit/phpunit": "4.0.*"
+  },
+  "autoload": {
+    "psr-4": {
+      "DoSomething\\MBC_Transactional_Email\\": "src/"
     }
+  },
+  "scripts": {
+    "pre-install-cmd": [
+      "./bin/install.sh"
+    ],
+    "pre-package-update": [
+      "git checkout master",
+      "git pull"
+    ],
+    "post-package-update": [
+      "./vendor/bin/phpunit tests"
+    ],
+    "post-package-uninstall": [
+      "./bin/uninstall.sh"
+    ]
+  }
 }
