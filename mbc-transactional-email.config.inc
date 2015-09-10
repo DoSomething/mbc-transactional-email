@@ -1,12 +1,18 @@
 <?php
 /**
+ * Configuration settings for mbc-transactional-email.
+ *
  * Message Broker configuration settings for mbc-user-digest application. The MB_Configuration class
  * is used to create a singleton instance that can be referenced anywhere in the application for
  * application configuration settings.
  *
- * @package mbc-user-digest
+ * @package mbc-transactional-email
+ * @link    https://github.com/DoSomething/mbc-transactional-email
  */
 
+/**
+ * Load configuration settings into singleton instance with MB_Configuration class.
+ */
 use DoSomething\MB_Toolbox\MB_Configuration;
 use DoSomething\StatHat\Client as StatHat;
 use DoSomething\MB_Toolbox\MB_Toolbox_cURL;
