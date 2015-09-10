@@ -1,7 +1,12 @@
-<?PHP
+<?php
 /**
- * Process tranasactional email message requests. Interface to with a service to send email
+ * Send transactional email messages.
+ *
+ * Process tranasactional email message requests. Interface with email service(Mandrill) to send email
  * messages on demand based on the arrival of messages in the transactionalQueue.
+ *
+ * @package mbc-transactional-email
+ * @link    https://github.com/DoSomething/mbc-transactional-email
  */
 
 namespace DoSomething\MBC_TransactionalEmail;
@@ -13,7 +18,9 @@ use DoSomething\MB_Toolbox\MB_Toolbox_BaseConsumer;
 use \Exception;
 
 /**
- * MBC_Transactional_Email class - functionality related to the Message Broker
+ * Convert a message in the transactionalQueue to a email message request sent to the Mandrill API.
+ *
+ * MBC_TransactionalEmail_Consumer class - functionality related to the Message Broker
  * producer mbc-transactional-email application. Process messages in the transactionalQueue to
  * generate transactional email messages using the related email service.
  */
