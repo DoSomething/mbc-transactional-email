@@ -1,11 +1,21 @@
 <?php
 /**
- * mbc-transactional-email.php
+ * mbc-transactional-email: Manage sending transactional email message.
  *
  * Process entries in the transactionalQueue. Each entry will result in a call
  * to the Mandrill API to send an email address.
+ *
+ * @package mbc-transactional-email
+ * @link    https://github.com/DoSomething/mbc-transactional-email
  */
 
+ /**
+  * Base values to coordinate the script being a daemon process.
+  *
+  * Loading application configuration settings then go into a wait state listening to the
+  * transactionalQueue. When a message arrives the callback in the MBC_TransactionalEmail_Consumer
+  * is triggered.
+  */
 date_default_timezone_set("America/New_York");
 define('CONFIG_PATH',  __DIR__ . '/messagebroker-config');
 // The number of messages for the consumer to reserve with each callback
