@@ -26,19 +26,21 @@
   },
   "autoload": {
     "psr-4": {
-      "DoSomething\\MBC_Transactional_Email\\": "src/"
+      "DoSomething\\MBC_TransactionalEmail\\": "src/"
     }
   },
   "scripts": {
     "pre-install-cmd": [
-      "./bin/install.sh"
+      "./bin/install.sh",
+      "phpdoc -d ./ -t ./docs --ignore=vendor/*"
     ],
     "pre-package-update": [
       "git checkout master",
       "git pull"
     ],
     "post-package-update": [
-      "./vendor/bin/phpunit tests"
+      "./vendor/bin/phpunit tests",
+      "phpdoc -d ./ -t ./docs --ignore=vendor/*"
     ],
     "post-package-uninstall": [
       "./bin/uninstall.sh"
