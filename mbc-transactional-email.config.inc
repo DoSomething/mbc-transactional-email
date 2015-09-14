@@ -23,7 +23,17 @@ require_once __DIR__ . '/messagebroker-config/mb-secure-config.inc';
 
 $mbConfig = MB_Configuration::getInstance();
 
-// Settings
+$generalSettings = $mbConfig->gatherSettings('general');
+$mbConfig->setProperty('generalSettings', [
+  'default' => [
+    'first_name' => $generalSettings->default->first_name
+  ],
+  'email' => [
+    'from' => $generalSettings->email->from,
+    'name' => $generalSettings->email->name,
+  ]
+]);
+
 $mbConfig->setProperty('rabbit_credentials', [
   'host' =>  getenv("RABBITMQ_HOST"),
   'port' => getenv("RABBITMQ_PORT"),
