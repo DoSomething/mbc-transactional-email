@@ -28,6 +28,18 @@ class MBC_TransactionalEmail_Consumer extends MB_Toolbox_BaseConsumer
 {
 
   /**
+   * Compiled values for generation of message request to email service
+   * @var array $request
+   */
+  protected $request;
+
+  /**
+   * The name of the Madrill template to format the message with.
+   * @var array $template
+   */
+  protected $template;
+
+  /**
    * $callback = function()
    *   A callback function for basic_consume() that will manage the sending of a
    *   request to Mandrill based on the details in $payload
@@ -39,176 +51,133 @@ class MBC_TransactionalEmail_Consumer extends MB_Toolbox_BaseConsumer
 
     echo '-------  mbc-transactional-email - MBC_TransactionalEmail_Consumer->consumeTransactionalQueue() START -------', PHP_EOL;
 
-    parent::consumeQueue($message);
+    parent::consumeQueue($payload);
     echo PHP_EOL . PHP_EOL;
     echo '** Consuming: ' . $this->message['email'], PHP_EOL;
 
     if ($this->canProcess()) {
 
-      echo '- canProcess(): OK', PHP_EOL;
-      $setterOK = $this->setter($this->message);
+      try {
 
-      // Build out user object and gather / trigger building campaign objects
-      // based on user campaign activity
-      if ($setterOK) {
-        echo '- setter(): OK', PHP_EOL;
+        $this->setter();
         $this->process();
       }
+      catch(Exception $e) {
+        echo 'Error sending transactional email to: ' . $this->message['email'] . '. Error: ' . $e->getMessage();
+      }
+
     }
 
-    // @todo: Throdle the number of consumers running. Based on the number of messages
-    // waiting to be processed start / stop consumers.
+    // @todo: Throttle the number of consumers running. Based on the number of messages
+    // waiting to be processed start / stop consumers. Make "reactive"!
     $queueMessages = parent::queueStatus('digestUserQueue');
     echo '- queueMessages ready: ' . $queueMessages['ready'], PHP_EOL;
     echo '- queueMessages unacked: ' . $queueMessages['unacked'], PHP_EOL;
 
     $this->messageBroker->sendAck($this->message['payload']);
     echo '- Ack sent: OK', PHP_EOL . PHP_EOL;
-    
-
-      
-      
-    
-    
-    
-    list($templateName, $templateContent, $message) = $this->buildMessage($payloadDetails);
-
-    // Send message if no errors from building message
-    if ($templateName != FALSE) {
-
-      // Send message
-      try {
-
-        $mandrillResults = $mandrill->messages->sendTemplate($templateName, $templateContent, $message);
-        echo '-> mbc-transactional-email Mandrill message sent: ' . $payloadDetails['email'] . ' - ' . date('D M j G:i:s T Y'), PHP_EOL;
-
-        // Log email address issues returned from Mandrill
-        if (isset($mandrillResults[0]['reject_reason']) && $mandrillResults[0]['reject_reason'] != NULL) {
-          $this->statHat->addStatName('Mandrill reject_reason: ' . $mandrillResults[0]['reject_reason']);
-        }
-
-        // Remove from queue if Mandrill responds without configuration error
-        if (isset($mandrillResults[0]['status']) && $mandrillResults[0]['status'] != 'error') {
-          $this->messageBroker->sendAck($payload);
-          $this->statHat->addStatName('consumeTransactionalQueue');
-
-          // Log activities
-          $this->statHat->clearAddedStatNames();
-          $this->statHat->addStatName('activity: ' . $payloadDetails['activity']);
-
-          // Track campaign signups
-          if ($payloadDetails['activity'] == 'campaign_signup') {
-            $this->statHat->clearAddedStatNames();
-            if (isset($payloadDetails['mailchimp_group_name'])) {
-              $this->statHat->addStatName('campaign_signup: ' . $payloadDetails['mailchimp_group_name']);
-            }
-            else {
-              $this->statHat->addStatName('campaign_signup: Non staff pic');
-            }
-
-          }
-
-        }
-        else {
-          echo '-> mbc-transactional-email Mandrill message ERROR: ' . print_r($mandrillResults, TRUE) . ' - ' . date('D M j G:i:s T Y'), PHP_EOL;
-        }
-
-      }
-      catch(Exception $e) {
-        echo 'Message: ' .$e->getMessage();
-        $this->statHat->addStatName('campaign_signup Mandrill: ERROR');
-      }
-
-      // All addStatName stats will be incremented by one at the end of the callback.
-      $this->statHat->reportCount(1);
-
-    }
-    else {
-      echo '------- mbc-transactional-email - consumeTransactionalQueue - buildMessage ERROR - ' . date('D M j G:i:s T Y') . ' -------', PHP_EOL;
-      $this->messageBroker->sendAck($payload);
-    }
 
     echo '-------  mbc-transactional-email - MBC_TransactionalEmail_Consumer->consumeTransactionalQueue() END -------', PHP_EOL;
   }
   
   /**
+   * Conditions to test before processing the message.
    *
+   * @return boolean
    */
   private function canProcess() {
     
-         // Validate payload
-    if (empty($payload['email'])) {
-      trigger_error('Invalid Payload - Email address in payload is required.', E_USER_WARNING);
-      echo '------- mbc-transactional-email - buildMessage ERROR, missing email: ' . print_r($payload, TRUE) . ' - ' . date('D M j G:i:s T Y') . ' -------', PHP_EOL;
-      $this->statHat->addStatName('buildMessage: Error - email address blank.');
+    if (isset($this->message['email'])) {
+      echo '- canProcess(), email not set.', PHP_EOL;
       return FALSE;
     }
 
+   if (filter_var($this->message['email'], FILTER_VALIDATE_EMAIL) === false) {
+      echo '- canProcess(), failed FILTER_VALIDATE_EMAIL: ' . $this->message['email'], PHP_EOL;
+      return FALSE;
+    }
+    else {
+      $this->message['email'] = filter_var($this->message['email'], FILTER_VALIDATE_EMAIL);
+    }
+
+    return TRUE;
   }
 
   /**
-   *
+   * Construct values for submission to email service.
    */
   private function setter() {
-    
 
+    $tags = [];
+    $tags[] = $this->message['activity'];
 
-    if (isset($payload['email_tags']) && is_array($payload['email_tags'])) {
-      $tags = $payload['email_tags'];
+    // Consolidate possible variable names (tags, email_tags) for email message tags
+    if (isset($this->message['tags']) && is_array($this->message['tags']))  {
+      $tags = array_merge($tags, $this->message['tags']);
+    } elseif (isset($this->message['email_tags']) && is_array($this->message['email_tags'])) {
+      $tags = array_merge($tags, $this->message['email_tags']);
     }
-    elseif (isset($payload['tags']) && is_array($payload['tags']))  {
-      $tags = $payload['tags'];
+
+    // Define user first name
+    if (isset($this->message['merge_vars']['FNAME'])) {
+      $firstName = $this->message['merge_vars']['FNAME'];
+    }
+    elseif (isset($this->message['first_name'])) {
+      $firstName = $this->message['first_name'];
+      $this->message['merge_vars']['FNAME'] = $firstName;
     }
     else {
-      $tags = array(
-        0 => $payload['activity'],
-      );
+      $firstName = $this->settings->default->first_name;
+      $this->message['merge_vars']['FNAME'] = $firstName;
     }
 
-    // @todo: Add support for $merge_vars being empty
-    $message = array(
-      'from_email' => 'no-reply@dosomething.org',
-      'from_name' => 'DoSomething.org',
+    $this->request = array(
+      'from_email' => $this->settings->email->from,
+      'from_name' => $this->settings->email->name,
       'to' => array(
         array(
-          'email' => $payload['email'],
-          'name' => isset($payload['merge_vars']['FNAME']) ? $payload['merge_vars']['FNAME'] : $payload['email'],
+          'email' => $this->message['email'],
+          'name' => $firstName,
         )
       ),
       'tags' => $tags,
     );
 
     $merge_vars = array();
-    if (isset($payload['merge_vars'])) {
-      foreach ($payload['merge_vars'] as $varName => $varValue) {
-        // Prevent FNAME from being blank
-        if ($varName == 'FNAME' && $varValue == '') {
-          $varValue = 'Doer';
-        }
+    if (isset($this->message['merge_vars'])) {
+      foreach ($this->message['merge_vars'] as $varName => $varValue) {
         $merge_vars[] = array(
           'name' => $varName,
           'content' => $varValue
         );
       }
-      $message['merge_vars'][0] = array(
-        'rcpt' => $payload['email'],
+      $this->request['merge_vars'][0] = array(
+        'rcpt' => $this->message['email'],
         'vars' => $merge_vars
       );
     }
 
-    if (isset($payload['email_template'])) {
-      $templateName = $payload['email_template'];
+    if (isset($this->message['email_template'])) {
+      $this->template = $this->message['email_template'];
     }
-    // @todo: remove once email-template is out of code base
-    elseif (isset($payload['email-template'])) {
-      $templateName = $payload['email-template'];
+    elseif (isset($this->message['email-template'])) {
+      $this->template = $this->message['email-template'];
     }
     else {
-      echo 'Template not defined: ' . print_r($payload, TRUE), PHP_EOL;
+      throw new Exception('Template not defined : ' . print_r($payload, TRUE));
       $templateName = FALSE;
     }
 
+  }
+
+  /**
+   * process(): Send composed settings to Mandrill to trigger transactional email message being sent.
+   */
+  private function process() {
+
     // example: 'content' => 'Hi *|FIRSTNAME|* *|LASTNAME|*, thanks for signing up.'
+    // Needs to be set due to "funkiness" in MailChimp API that requires a value
+    // regardless of the use of a template.
     $templateContent = array(
       array(
           'name' => 'main',
@@ -216,55 +185,39 @@ class MBC_TransactionalEmail_Consumer extends MB_Toolbox_BaseConsumer
       ),
     );
 
-  }
+    $mandrillResults = $mandrill->messages->sendTemplate($this->template, $templateContent, $this->message);
+    echo '-> mbc-transactional-email Mandrill message sent: ' . $payloadDetails['email'] . ' - ' . date('D M j G:i:s T Y'), PHP_EOL;
 
-  /**
-   *
-   */
-  private function process() {
-    
-         // Send message
-      try {
+    // Log email address issues returned from Mandrill
+    if (isset($mandrillResults[0]['reject_reason']) && $mandrillResults[0]['reject_reason'] != NULL) {
+      $this->statHat->addStatName('Mandrill reject_reason: ' . $mandrillResults[0]['reject_reason']);
+    }
 
-        $mandrillResults = $mandrill->messages->sendTemplate($templateName, $templateContent, $message);
-        echo '-> mbc-transactional-email Mandrill message sent: ' . $payloadDetails['email'] . ' - ' . date('D M j G:i:s T Y'), PHP_EOL;
+    // Remove from queue if Mandrill responds without configuration error
+    if (isset($mandrillResults[0]['status']) && $mandrillResults[0]['status'] != 'error') {
+      $this->messageBroker->sendAck($payload);
+      $this->statHat->addStatName('consumeTransactionalQueue');
 
-        // Log email address issues returned from Mandrill
-        if (isset($mandrillResults[0]['reject_reason']) && $mandrillResults[0]['reject_reason'] != NULL) {
-          $this->statHat->addStatName('Mandrill reject_reason: ' . $mandrillResults[0]['reject_reason']);
-        }
+      // Log activities
+      $this->statHat->clearAddedStatNames();
+      $this->statHat->addStatName('activity: ' . $payloadDetails['activity']);
 
-        // Remove from queue if Mandrill responds without configuration error
-        if (isset($mandrillResults[0]['status']) && $mandrillResults[0]['status'] != 'error') {
-          $this->messageBroker->sendAck($payload);
-          $this->statHat->addStatName('consumeTransactionalQueue');
-
-          // Log activities
-          $this->statHat->clearAddedStatNames();
-          $this->statHat->addStatName('activity: ' . $payloadDetails['activity']);
-
-          // Track campaign signups
-          if ($payloadDetails['activity'] == 'campaign_signup') {
-            $this->statHat->clearAddedStatNames();
-            if (isset($payloadDetails['mailchimp_group_name'])) {
-              $this->statHat->addStatName('campaign_signup: ' . $payloadDetails['mailchimp_group_name']);
-            }
-            else {
-              $this->statHat->addStatName('campaign_signup: Non staff pic');
-            }
-
-          }
-
+      // Track campaign signups
+      if ($payloadDetails['activity'] == 'campaign_signup') {
+        $this->statHat->clearAddedStatNames();
+        if (isset($payloadDetails['mailchimp_group_name'])) {
+          $this->statHat->addStatName('campaign_signup: ' . $payloadDetails['mailchimp_group_name']);
         }
         else {
-          echo '-> mbc-transactional-email Mandrill message ERROR: ' . print_r($mandrillResults, TRUE) . ' - ' . date('D M j G:i:s T Y'), PHP_EOL;
+          $this->statHat->addStatName('campaign_signup: Non staff pic');
         }
 
       }
-      catch(Exception $e) {
-        echo 'Message: ' .$e->getMessage();
-        $this->statHat->addStatName('campaign_signup Mandrill: ERROR');
-      }
+
+    }
+    else {
+      echo '-> mbc-transactional-email Mandrill message ERROR: ' . print_r($mandrillResults, TRUE) . ' - ' . date('D M j G:i:s T Y'), PHP_EOL;
+    }
 
   }
 
