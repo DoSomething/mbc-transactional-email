@@ -25,7 +25,7 @@ define('QOS_SIZE', 1);
 
 // Load up the Composer autoload magic
 require_once __DIR__ . '/vendor/autoload.php';
-use DoSomething\MBC_DigestEmail\MBC_TransactionalEmail_Consumer;
+use DoSomething\MBC_TransactionalEmail\MBC_TransactionalEmail_Consumer;
 
 require_once __DIR__ . '/mbc-transactional-email.config.inc';
 
