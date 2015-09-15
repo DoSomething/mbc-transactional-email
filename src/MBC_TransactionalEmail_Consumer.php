@@ -28,6 +28,12 @@ class MBC_TransactionalEmail_Consumer extends MB_Toolbox_BaseConsumer
 {
 
   /**
+   * Mandrill API
+   * @var object $mandrill
+   */
+  protected $madrill;
+
+  /**
    * Compiled values for generation of message request to email service
    * @var array $request
    */
@@ -38,6 +44,15 @@ class MBC_TransactionalEmail_Consumer extends MB_Toolbox_BaseConsumer
    * @var array $template
    */
   protected $template;
+
+  /**
+   * Extend the base constructor to include loading the Mandrill object.
+   */
+  public function __construct() {
+
+   parent::__construct();
+   $this->mandrill = $this->mbConfig->getProperty('mandrill');
+  }
 
   /**
    * $callback = function()
@@ -59,7 +74,7 @@ class MBC_TransactionalEmail_Consumer extends MB_Toolbox_BaseConsumer
 
       try {
 
-        $this->setter();
+        $this->setter($this->message);
         $this->process();
       }
       catch(Exception $e) {
@@ -85,9 +100,9 @@ class MBC_TransactionalEmail_Consumer extends MB_Toolbox_BaseConsumer
    *
    * @return boolean
    */
-  private function canProcess() {
+  protected function canProcess() {
     
-    if (isset($this->message['email'])) {
+    if (!(isset($this->message['email']))) {
       echo '- canProcess(), email not set.', PHP_EOL;
       return FALSE;
     }
@@ -105,38 +120,41 @@ class MBC_TransactionalEmail_Consumer extends MB_Toolbox_BaseConsumer
 
   /**
    * Construct values for submission to email service.
+   *
+   * @param array $message
+   *   The message to process based on what was collected from the queue being processed.
    */
-  private function setter() {
+  protected function setter($message) {
 
     $tags = [];
-    $tags[] = $this->message['activity'];
+    $tags[] = $message['activity'];
 
     // Consolidate possible variable names (tags, email_tags) for email message tags
-    if (isset($this->message['tags']) && is_array($this->message['tags']))  {
-      $tags = array_merge($tags, $this->message['tags']);
-    } elseif (isset($this->message['email_tags']) && is_array($this->message['email_tags'])) {
-      $tags = array_merge($tags, $this->message['email_tags']);
+    if (isset($message['tags']) && is_array($message['tags']))  {
+      $tags = array_merge($tags, $message['tags']);
+    } elseif (isset($message['email_tags']) && is_array($message['email_tags'])) {
+      $tags = array_merge($tags, $message['email_tags']);
     }
 
     // Define user first name
-    if (isset($this->message['merge_vars']['FNAME'])) {
-      $firstName = $this->message['merge_vars']['FNAME'];
+    if (isset($message['merge_vars']['FNAME'])) {
+      $firstName = $message['merge_vars']['FNAME'];
     }
-    elseif (isset($this->message['first_name'])) {
-      $firstName = $this->message['first_name'];
-      $this->message['merge_vars']['FNAME'] = $firstName;
+    elseif (isset($message['first_name'])) {
+      $firstName = $message['first_name'];
+      $message['merge_vars']['FNAME'] = $firstName;
     }
     else {
       $firstName = $this->settings->default->first_name;
-      $this->message['merge_vars']['FNAME'] = $firstName;
+      $message['merge_vars']['FNAME'] = $firstName;
     }
 
     $this->request = array(
-      'from_email' => $this->settings->email->from,
-      'from_name' => $this->settings->email->name,
+      'from_email' => $this->settings['email']['from'],
+      'from_name' => $this->settings['email']['name'],
       'to' => array(
         array(
-          'email' => $this->message['email'],
+          'email' => $message['email'],
           'name' => $firstName,
         )
       ),
@@ -144,36 +162,35 @@ class MBC_TransactionalEmail_Consumer extends MB_Toolbox_BaseConsumer
     );
 
     $merge_vars = array();
-    if (isset($this->message['merge_vars'])) {
-      foreach ($this->message['merge_vars'] as $varName => $varValue) {
+    if (isset($message['merge_vars'])) {
+      foreach ($message['merge_vars'] as $varName => $varValue) {
         $merge_vars[] = array(
           'name' => $varName,
           'content' => $varValue
         );
       }
       $this->request['merge_vars'][0] = array(
-        'rcpt' => $this->message['email'],
+        'rcpt' => $message['email'],
         'vars' => $merge_vars
       );
     }
 
-    if (isset($this->message['email_template'])) {
-      $this->template = $this->message['email_template'];
+    if (isset($message['email_template'])) {
+      $this->template = $message['email_template'];
     }
-    elseif (isset($this->message['email-template'])) {
-      $this->template = $this->message['email-template'];
+    elseif (isset($message['email-template'])) {
+      $this->template = $message['email-template'];
     }
     else {
-      throw new Exception('Template not defined : ' . print_r($payload, TRUE));
-      $templateName = FALSE;
+      throw new Exception('Template not defined : ' . print_r($message, TRUE));
+      $this->template = FALSE;
     }
-
   }
 
   /**
    * process(): Send composed settings to Mandrill to trigger transactional email message being sent.
    */
-  private function process() {
+  protected function process() {
 
     // example: 'content' => 'Hi *|FIRSTNAME|* *|LASTNAME|*, thanks for signing up.'
     // Needs to be set due to "funkiness" in MailChimp API that requires a value
@@ -185,7 +202,7 @@ class MBC_TransactionalEmail_Consumer extends MB_Toolbox_BaseConsumer
       ),
     );
 
-    $mandrillResults = $mandrill->messages->sendTemplate($this->template, $templateContent, $this->message);
+    $mandrillResults = $this->mandrill->messages->sendTemplate($this->template, $templateContent, $this->message);
     echo '-> mbc-transactional-email Mandrill message sent: ' . $payloadDetails['email'] . ' - ' . date('D M j G:i:s T Y'), PHP_EOL;
 
     // Log email address issues returned from Mandrill
