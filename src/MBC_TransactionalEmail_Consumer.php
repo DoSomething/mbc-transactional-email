@@ -4,9 +4,6 @@
  *
  * Process tranasactional email message requests. Interface with email service(Mandrill) to send email
  * messages on demand based on the arrival of messages in the transactionalQueue.
- *
- * @package mbc-transactional-email
- * @link    https://github.com/DoSomething/mbc-transactional-email
  */
 
 namespace DoSomething\MBC_TransactionalEmail;
@@ -18,11 +15,14 @@ use DoSomething\MB_Toolbox\MB_Toolbox_BaseConsumer;
 use \Exception;
 
 /**
- * Convert a message in the transactionalQueue to a email message request sent to the Mandrill API.
+ * Consume a message in the transactionalQueue to a email message request that sends an email
+ * using the Mandrill API.
  *
  * MBC_TransactionalEmail_Consumer class - functionality related to the Message Broker
  * producer mbc-transactional-email application. Process messages in the transactionalQueue to
  * generate transactional email messages using the related email service.
+ * @package mbc-transactional-email
+ * @link    https://github.com/DoSomething/mbc-transactional-email
  */
 class MBC_TransactionalEmail_Consumer extends MB_Toolbox_BaseConsumer
 {
@@ -31,7 +31,7 @@ class MBC_TransactionalEmail_Consumer extends MB_Toolbox_BaseConsumer
    * Mandrill API
    * @var object $mandrill
    */
-  protected $madrill;
+  protected $mandrill;
 
   /**
    * Compiled values for generation of message request to email service
@@ -85,12 +85,9 @@ class MBC_TransactionalEmail_Consumer extends MB_Toolbox_BaseConsumer
 
     // @todo: Throttle the number of consumers running. Based on the number of messages
     // waiting to be processed start / stop consumers. Make "reactive"!
-    $queueMessages = parent::queueStatus('digestUserQueue');
+    $queueMessages = parent::queueStatus('transactionalQueue');
     echo '- queueMessages ready: ' . $queueMessages['ready'], PHP_EOL;
     echo '- queueMessages unacked: ' . $queueMessages['unacked'], PHP_EOL;
-
-    $this->messageBroker->sendAck($this->message['payload']);
-    echo '- Ack sent: OK', PHP_EOL . PHP_EOL;
 
     echo '-------  mbc-transactional-email - MBC_TransactionalEmail_Consumer->consumeTransactionalQueue() END -------', PHP_EOL;
   }
@@ -202,38 +199,15 @@ class MBC_TransactionalEmail_Consumer extends MB_Toolbox_BaseConsumer
       ),
     );
 
-    $mandrillResults = $this->mandrill->messages->sendTemplate($this->template, $templateContent, $this->message);
-    echo '-> mbc-transactional-email Mandrill message sent: ' . $payloadDetails['email'] . ' - ' . date('D M j G:i:s T Y'), PHP_EOL;
+    $mandrillResults = $this->mandrill->messages->sendTemplate($this->template, $templateContent, $this->request);
 
-    // Log email address issues returned from Mandrill
     if (isset($mandrillResults[0]['reject_reason']) && $mandrillResults[0]['reject_reason'] != NULL) {
       $this->statHat->addStatName('Mandrill reject_reason: ' . $mandrillResults[0]['reject_reason']);
+      throw new Exception('Mandrill reject_reason: ' . $mandrillResults[0]['reject_reason']);
     }
-
-    // Remove from queue if Mandrill responds without configuration error
-    if (isset($mandrillResults[0]['status']) && $mandrillResults[0]['status'] != 'error') {
-      $this->messageBroker->sendAck($payload);
-      $this->statHat->addStatName('consumeTransactionalQueue');
-
-      // Log activities
-      $this->statHat->clearAddedStatNames();
-      $this->statHat->addStatName('activity: ' . $payloadDetails['activity']);
-
-      // Track campaign signups
-      if ($payloadDetails['activity'] == 'campaign_signup') {
-        $this->statHat->clearAddedStatNames();
-        if (isset($payloadDetails['mailchimp_group_name'])) {
-          $this->statHat->addStatName('campaign_signup: ' . $payloadDetails['mailchimp_group_name']);
-        }
-        else {
-          $this->statHat->addStatName('campaign_signup: Non staff pic');
-        }
-
-      }
-
-    }
-    else {
-      echo '-> mbc-transactional-email Mandrill message ERROR: ' . print_r($mandrillResults, TRUE) . ' - ' . date('D M j G:i:s T Y'), PHP_EOL;
+    elseif (isset($mandrillResults[0]['status']) && $mandrillResults[0]['status'] != 'error') {
+      echo '-> mbc-transactional-email Mandrill message sent: ' . $this->request['to'][0]['email'] . ' - ' . date('D M j G:i:s T Y'), PHP_EOL;
+      $this->messageBroker->sendAck($this->message['payload']);
     }
 
   }
