@@ -8,6 +8,13 @@ Message Broker consumer that processes messages sent to the transactionalQueue t
 ####Install with:
 `composer install --no-dev`
 
+####Run application:
+`APP_ENV="<production | development | test>"`
+`export APP_ENV`
+`php mbc-transactional-email.php`
+
+The APP_ENV setting manages what connection configuration settings are used.
+
 ####Updates:
 `composer update`
 - will perform:
