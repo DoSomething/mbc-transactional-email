@@ -1,7 +1,7 @@
 {
   "name": "mbc-transactional-email",
   "type": "project",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "A consumer app for the Message Broker system that consumes entries on the transactionalQueue. Queue payload values determine the contents of the merge_var values sent with the Mandrill API submission to dispatch an email message.",
   "keywords": ["message broker", "email", "mandrill"],
   "homepage": "https://github.com/DoSomething/mbc-transactional-email",
