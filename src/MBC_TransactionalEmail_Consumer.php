@@ -204,14 +204,17 @@ class MBC_TransactionalEmail_Consumer extends MB_Toolbox_BaseConsumer
 
     $mandrillResults = $this->mandrill->messages->sendTemplate($this->template, $templateContent, $this->request);
 
+    $statName = 'mbc-transactional-email: Mandrill';
     if (isset($mandrillResults[0]['reject_reason']) && $mandrillResults[0]['reject_reason'] != NULL) {
       throw new Exception('Mandrill reject_reason: ' . $mandrillResults[0]['reject_reason']);
+      $statName = 'mbc-transactional-email: Mandrill Error: ' . $mandrillResults[0]['reject_reason'];
     }
     elseif (isset($mandrillResults[0]['status']) && $mandrillResults[0]['status'] != 'error') {
       echo '-> mbc-transactional-email Mandrill message sent: ' . $this->request['to'][0]['email'] . ' - ' . date('D M j G:i:s T Y'), PHP_EOL;
       $this->messageBroker->sendAck($this->message['payload']);
+      $statName = 'mbc-transactional-email: Mandrill OK';
     }
-
+    $this->statHat->ezCount($statName, 1);
   }
 
   /**
@@ -243,7 +246,11 @@ class MBC_TransactionalEmail_Consumer extends MB_Toolbox_BaseConsumer
     }
 
     echo '- countryCode: ' . $countryCode, PHP_EOL;
+    $statName = 'mbc-transactional-email: country: ' . $countryCode;
+    $this->statHat->ezCount($statName, 1);
     echo '- setTemplateName: ' . $templateName, PHP_EOL;
+    $statName = 'mbc-transactional-email: template: ' . $templateName;
+    $this->statHat->ezCount($statName, 1);
     return $templateName;
   }
 
