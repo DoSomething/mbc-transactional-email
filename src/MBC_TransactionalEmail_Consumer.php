@@ -201,7 +201,6 @@ class MBC_TransactionalEmail_Consumer extends MB_Toolbox_BaseConsumer
     $mandrillResults = $this->mandrill->messages->sendTemplate($this->template, $templateContent, $this->request);
 
     if (isset($mandrillResults[0]['reject_reason']) && $mandrillResults[0]['reject_reason'] != NULL) {
-      $this->statHat->addStatName('Mandrill reject_reason: ' . $mandrillResults[0]['reject_reason']);
       throw new Exception('Mandrill reject_reason: ' . $mandrillResults[0]['reject_reason']);
     }
     elseif (isset($mandrillResults[0]['status']) && $mandrillResults[0]['status'] != 'error') {
@@ -239,6 +238,8 @@ class MBC_TransactionalEmail_Consumer extends MB_Toolbox_BaseConsumer
       $templateName = 'mb-campaign-signup-US';
     }
 
+    echo '- countryCode: ' . $countryCode, PHP_EOL;
+    echo '- setTemplateName: ' . $templateName, PHP_EOL;
     return $templateName;
   }
 
