@@ -75,7 +75,6 @@ class MBC_TransactionalEmail_Consumer extends MB_Toolbox_BaseConsumer
     echo '-------  mbc-transactional-email - MBC_TransactionalEmail_Consumer->consumeTransactionalQueue() START -------', PHP_EOL;
 
     parent::consumeQueue($payload);
-    echo PHP_EOL . PHP_EOL;
     echo '** Consuming: ' . $this->message['email'], PHP_EOL;
 
     if ($this->canProcess()) {
@@ -102,7 +101,7 @@ class MBC_TransactionalEmail_Consumer extends MB_Toolbox_BaseConsumer
     echo '- queueMessages ready: ' . $queueMessages['ready'], PHP_EOL;
     echo '- queueMessages unacked: ' . $queueMessages['unacked'], PHP_EOL;
 
-    echo '-------  mbc-transactional-email - MBC_TransactionalEmail_Consumer->consumeTransactionalQueue() END -------', PHP_EOL;
+    echo '-------  mbc-transactional-email - MBC_TransactionalEmail_Consumer->consumeTransactionalQueue() END -------', PHP_EOL . PHP_EOL;
   }
   
   /**
