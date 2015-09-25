@@ -28,6 +28,13 @@ class MBC_TransactionalEmail_Consumer extends MB_Toolbox_BaseConsumer
 {
 
   /**
+   * Message Broker Toolbox - collection of utility methods used by many of the
+   * Message Broker producer and consumer applications.
+   * @var object $mbToolbox
+   */
+  protected $mbToolbox;
+
+  /**
    * Mandrill API
    * @var object $mandrill
    */
@@ -51,6 +58,7 @@ class MBC_TransactionalEmail_Consumer extends MB_Toolbox_BaseConsumer
   public function __construct() {
 
    parent::__construct();
+   $this->mbToolbox = $this->mbConfig->getProperty('mbToolbox');
    $this->mandrill = $this->mbConfig->getProperty('mandrill');
   }
 
@@ -172,16 +180,7 @@ class MBC_TransactionalEmail_Consumer extends MB_Toolbox_BaseConsumer
       );
     }
 
-    if (isset($message['email_template'])) {
-      $this->template = $message['email_template'];
-    }
-    elseif (isset($message['email-template'])) {
-      $this->template = $message['email-template'];
-    }
-    else {
-      throw new Exception('Template not defined : ' . print_r($message, TRUE));
-      $this->template = FALSE;
-    }
+    $this->template = $this->setTemplateName($message);
   }
 
   /**
@@ -210,6 +209,37 @@ class MBC_TransactionalEmail_Consumer extends MB_Toolbox_BaseConsumer
       $this->messageBroker->sendAck($this->message['payload']);
     }
 
+  }
+
+  /**
+   * Determine the setting for the template name to send with the transactionamail request.
+   *
+   * @param array $message
+   *   Settings of the message from the consumed queue.
+   */
+  protected function setTemplateName($message) {
+
+    if (isset($message['email_template'])) {
+      $template = $message['email_template'];
+    }
+    elseif (isset($message['email-template'])) {
+      $template = $message['email-template'];
+    }
+    else {
+      throw new Exception('Template not defined : ' . print_r($message, TRUE));
+      $template = FALSE;
+    }
+    // mb-campaign-signup-KR
+    $templateBits = explode('-', $template);
+    $countryCode = $templateBits[count($templateBits) - 1];
+    if ($this->mbToolbox->isDSAffiliate($countryCode)) {
+      $templateName = $template;
+    }
+    else {
+      $templateName = 'mb-campaign-signup-US';
+    }
+
+    return $templateName;
   }
 
 }
