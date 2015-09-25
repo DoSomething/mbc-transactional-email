@@ -239,7 +239,7 @@ class MBC_TransactionalEmail_Consumer extends MB_Toolbox_BaseConsumer
       $templateName = $template;
     }
     else {
-      $templateName = 'mb-campaign-signup-US';
+      $templateName = 'mb-' . $message['activity'] . '-US';
     }
 
     echo '- countryCode: ' . $countryCode, PHP_EOL;
