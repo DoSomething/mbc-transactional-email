@@ -91,6 +91,10 @@ class MBC_TransactionalEmail_Consumer extends MB_Toolbox_BaseConsumer
       }
 
     }
+    else {
+      echo '- ' . $this->message['email'] . ' can\'t be processed, removing from queue.', PHP_EOL;
+      $this->messageBroker->sendAck($this->message['payload']);
+    }
 
     // @todo: Throttle the number of consumers running. Based on the number of messages
     // waiting to be processed start / stop consumers. Make "reactive"!
