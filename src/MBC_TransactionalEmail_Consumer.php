@@ -63,16 +63,13 @@ class MBC_TransactionalEmail_Consumer extends MB_Toolbox_BaseConsumer
   }
 
   /**
-   * $callback = function()
-   *   A callback function for basic_consume() that will manage the sending of a
-   *   request to Mandrill based on the details in $payload
    *
    * @param string $payload
    *  An JSON array of the details of the message to be sent
    */
   public function consumeTransactionalQueue($payload) {
 
-    echo '-------  mbc-transactional-email - MBC_TransactionalEmail_Consumer->consumeTransactionalQueue() START -------', PHP_EOL;
+    echo '-------  mbc-transactional-email - MBC_TransactionalEmail_Consumer->consumeTransactionalQueue() - ' . date('j D M Y G:i:s T') . ' START -------', PHP_EOL;
 
     parent::consumeQueue($payload);
     echo '** Consuming: ' . $this->message['email'], PHP_EOL;
@@ -101,7 +98,7 @@ class MBC_TransactionalEmail_Consumer extends MB_Toolbox_BaseConsumer
     echo '- queueMessages ready: ' . $queueMessages['ready'], PHP_EOL;
     echo '- queueMessages unacked: ' . $queueMessages['unacked'], PHP_EOL;
 
-    echo '-------  mbc-transactional-email - MBC_TransactionalEmail_Consumer->consumeTransactionalQueue() END -------', PHP_EOL . PHP_EOL;
+    echo '-------  mbc-transactional-email - MBC_TransactionalEmail_Consumer->consumeTransactionalQueue() - ' . date('j D M Y G:i:s T') . ' END -------', PHP_EOL . PHP_EOL;
   }
   
   /**
