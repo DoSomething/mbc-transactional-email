@@ -33,7 +33,7 @@ The script is configured to consume the transactionalQueue one message at a time
 
 ####Composer options
 Before deploying to production, don't forget to optimize the autoloader
-`composer dump-autoload --optimize`
+- `composer dump-autoload --optimize`
 
 Exclude development packages
-`composer install --no-dev`
+- `composer install --no-dev`
