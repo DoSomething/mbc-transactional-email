@@ -247,14 +247,15 @@ class MBC_TransactionalEmail_Consumer extends MB_Toolbox_BaseConsumer
         $templateName = 'mb-' . str_replace('_', '-', $message['activity']) . '-US';
       }
 
+      echo '- activity: ' . $message['activity'], PHP_EOL;
+      $statName = 'mbc-transactional-email: activity: ' . $message['activity'];
+      $this->statHat->ezCount($statName, 1);
+      echo '- countryCode: ' . $countryCode, PHP_EOL;
+      $statName = 'mbc-transactional-email: country: ' . $countryCode;
+      $this->statHat->ezCount($statName, 1);
+
     }
 
-    echo '- activity: ' . $message['activity'], PHP_EOL;
-    $statName = 'mbc-transactional-email: activity: ' . $message['activity'];
-    $this->statHat->ezCount($statName, 1);
-    echo '- countryCode: ' . $countryCode, PHP_EOL;
-    $statName = 'mbc-transactional-email: country: ' . $countryCode;
-    $this->statHat->ezCount($statName, 1);
     echo '- setTemplateName: ' . $templateName, PHP_EOL;
     $statName = 'mbc-transactional-email: template: ' . $templateName;
     $this->statHat->ezCount($statName, 1);
