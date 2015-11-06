@@ -8,7 +8,7 @@ Message Broker consumer that processes messages sent to the transactionalQueue t
 ####Install with:
 `composer install --no-dev`
 
-To include PHPUnit and PHPDocumentor functionality:
+To include PHPUnit functionality:
 `composer install --dev`
 
 ####Run application:
