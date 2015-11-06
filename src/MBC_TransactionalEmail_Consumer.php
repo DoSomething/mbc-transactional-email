@@ -77,13 +77,12 @@ class MBC_TransactionalEmail_Consumer extends MB_Toolbox_BaseConsumer
     if ($this->canProcess()) {
 
       try {
-
         $this->setter($this->message);
         $this->process();
       }
       catch(Exception $e) {
         echo 'Error sending transactional email to: ' . $this->message['email'] . '. Error: ' . $e->getMessage();
-        $this->messageBroker->sendAck($this->message['payload']);
+        $this->messageBroker->sendNack($this->message['payload']);
       }
 
     }
@@ -232,14 +231,22 @@ class MBC_TransactionalEmail_Consumer extends MB_Toolbox_BaseConsumer
       throw new Exception('Template not defined : ' . print_r($message, TRUE));
       $template = FALSE;
     }
-    // mb-campaign-signup-KR
-    $templateBits = explode('-', $template);
-    $countryCode = $templateBits[count($templateBits) - 1];
-    if ($this->mbToolbox->isDSAffiliate($countryCode)) {
-      $templateName = $template;
-    }
-    else {
-      $templateName = 'mb-' . str_replace('_', '-', $message['activity']) . '-US';
+
+    // Don't apply country code logic to transactional requests that define source
+    // A source value suggests user import or other app that doesn't want the
+    // default template name generation.
+    if (!(isset($message['source']))) {
+
+      // mb-campaign-signup-KR
+      $templateBits = explode('-', $template);
+      $countryCode = $templateBits[count($templateBits) - 1];
+      if ($this->mbToolbox->isDSAffiliate($countryCode)) {
+        $templateName = $template;
+      }
+      else {
+        $templateName = 'mb-' . str_replace('_', '-', $message['activity']) . '-US';
+      }
+
     }
 
     echo '- activity: ' . $message['activity'], PHP_EOL;
@@ -251,6 +258,7 @@ class MBC_TransactionalEmail_Consumer extends MB_Toolbox_BaseConsumer
     echo '- setTemplateName: ' . $templateName, PHP_EOL;
     $statName = 'mbc-transactional-email: template: ' . $templateName;
     $this->statHat->ezCount($statName, 1);
+
     return $templateName;
   }
 
