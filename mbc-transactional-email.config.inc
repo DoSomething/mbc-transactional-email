@@ -25,9 +25,6 @@ require_once __DIR__ . '/messagebroker-config/mb-secure-config.inc';
 
 $mbConfig = MB_Configuration::getInstance();
 
-// Load secure, not tracked in version control, settings specific to the platform.
-require_once __DIR__ . '/messagebroker-config/mb-secure-config.inc';
-
 $generalSettings = $mbConfig->gatherSettings('general');
 $mbConfig->setProperty('generalSettings', [
   'default' => [
