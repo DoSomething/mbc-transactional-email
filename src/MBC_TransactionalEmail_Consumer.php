@@ -81,13 +81,17 @@ class MBC_TransactionalEmail_Consumer extends MB_Toolbox_BaseConsumer
         $this->process();
       }
       catch(Exception $e) {
-        echo 'Error sending transactional email to: ' . $this->message['email'] . '. Error: ' . $e->getMessage();
-        $this->messageBroker->sendNack($this->message['payload']);
+        echo 'Error sending transactional email to: ' . $this->message['email'] . '. Error: ' . print_r($e->getMessage(), TRUE) . PHP_EOL;
+        // @todo: Send error submission to userMailchimpStatusQueue for processing by mb-user-api
+        // See issue: https://github.com/DoSomething/mbc-transactional-email/issues/26 and
+        // https://github.com/DoSomething/mb-toolbox/issues/54
+
+        $this->messageBroker->sendAck($this->message['payload']);
       }
 
     }
     else {
-      echo '- ' . $this->message['email'] . ' can\'t be processed, removing from queue.', PHP_EOL;
+      echo '- ' . $this->message['email'] . ' failed canProcess(), removing from queue.', PHP_EOL;
       $this->messageBroker->sendAck($this->message['payload']);
     }
 
@@ -202,8 +206,8 @@ class MBC_TransactionalEmail_Consumer extends MB_Toolbox_BaseConsumer
 
     $statName = 'mbc-transactional-email: Mandrill';
     if (isset($mandrillResults[0]['reject_reason']) && $mandrillResults[0]['reject_reason'] != NULL) {
-      throw new Exception('Mandrill reject_reason: ' . $mandrillResults[0]['reject_reason']);
-      $statName = 'mbc-transactional-email: Mandrill Error: ' . $mandrillResults[0]['reject_reason'];
+      throw new Exception($mandrillResults[0]);
+      $statName = 'mbc-transactional-email: Mandrill Error: ' . $mandrillResults[0]['reject_reason]'];
     }
     elseif (isset($mandrillResults[0]['status']) && $mandrillResults[0]['status'] != 'error') {
       echo '-> mbc-transactional-email Mandrill message sent: ' . $this->request['to'][0]['email'] . ' - ' . date('D M j G:i:s T Y'), PHP_EOL;
