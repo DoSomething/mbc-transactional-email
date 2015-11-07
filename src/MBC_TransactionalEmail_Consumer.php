@@ -81,7 +81,8 @@ class MBC_TransactionalEmail_Consumer extends MB_Toolbox_BaseConsumer
         $this->process();
       }
       catch(Exception $e) {
-        echo 'Error sending transactional email to: ' . $this->message['email'] . '. Error: ' . print_r($e->getMessage(), TRUE) . PHP_EOL;
+        echo 'Error sending transactional email to: ' . $this->message['email'] . '. Error: ' . $e->getMessage() . PHP_EOL;
+        $errorDetails = $e->getMessage();
         // @todo: Send error submission to userMailchimpStatusQueue for processing by mb-user-api
         // See issue: https://github.com/DoSomething/mbc-transactional-email/issues/26 and
         // https://github.com/DoSomething/mb-toolbox/issues/54
@@ -206,7 +207,7 @@ class MBC_TransactionalEmail_Consumer extends MB_Toolbox_BaseConsumer
 
     $statName = 'mbc-transactional-email: Mandrill';
     if (isset($mandrillResults[0]['reject_reason']) && $mandrillResults[0]['reject_reason'] != NULL) {
-      throw new Exception($mandrillResults[0]);
+      throw new Exception(print_r($mandrillResults[0], TRUE));
       $statName = 'mbc-transactional-email: Mandrill Error: ' . $mandrillResults[0]['reject_reason]'];
     }
     elseif (isset($mandrillResults[0]['status']) && $mandrillResults[0]['status'] != 'error') {
