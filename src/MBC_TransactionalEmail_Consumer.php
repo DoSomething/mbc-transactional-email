@@ -260,6 +260,9 @@ class MBC_TransactionalEmail_Consumer extends MB_Toolbox_BaseConsumer
       $this->statHat->ezCount($statName, 1);
 
     }
+    else {
+      $templateName = $template;
+    }
 
     echo '- setTemplateName: ' . $templateName, PHP_EOL;
     $statName = 'mbc-transactional-email: template: ' . $templateName;
