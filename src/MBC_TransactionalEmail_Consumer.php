@@ -208,7 +208,7 @@ class MBC_TransactionalEmail_Consumer extends MB_Toolbox_BaseConsumer
     $statName = 'mbc-transactional-email: Mandrill';
     if (isset($mandrillResults[0]['reject_reason']) && $mandrillResults[0]['reject_reason'] != NULL) {
       throw new Exception(print_r($mandrillResults[0], TRUE));
-      $statName = 'mbc-transactional-email: Mandrill Error: ' . $mandrillResults[0]['reject_reason]'];
+      $statName = 'mbc-transactional-email: Mandrill Error: ' . $mandrillResults[0]['reject_reason'];
     }
     elseif (isset($mandrillResults[0]['status']) && $mandrillResults[0]['status'] != 'error') {
       echo '-> mbc-transactional-email Mandrill message sent: ' . $this->request['to'][0]['email'] . ' - ' . date('D M j G:i:s T Y'), PHP_EOL;
