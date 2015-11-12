@@ -17,7 +17,7 @@
   {
     "php": ">= 5.3.0",
     "DoSomething/messagebroker-phplib": "0.2.*",
-    "dosomething/mb-toolbox": "0.8.2",
+    "dosomething/mb-toolbox": "0.8.*",
     "dosomething/stathat": "1.*",
     "mandrill/mandrill": "1.0.*"
   },
