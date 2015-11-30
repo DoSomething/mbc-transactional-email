@@ -83,9 +83,12 @@ class MBC_TransactionalEmail_Consumer extends MB_Toolbox_BaseConsumer
       catch(Exception $e) {
         echo 'Error sending transactional email to: ' . $this->message['email'] . '. Error: ' . $e->getMessage() . PHP_EOL;
         $errorDetails = $e->getMessage();
+ 
         // @todo: Send error submission to userMailchimpStatusQueue for processing by mb-user-api
         // See issue: https://github.com/DoSomething/mbc-transactional-email/issues/26 and
         // https://github.com/DoSomething/mb-toolbox/issues/54
+        // For now, toos the message
+        $this->messageBroker->sendAck($this->message['payload']);
       }
 
     }
