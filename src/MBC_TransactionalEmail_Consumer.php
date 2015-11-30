@@ -86,8 +86,6 @@ class MBC_TransactionalEmail_Consumer extends MB_Toolbox_BaseConsumer
         // @todo: Send error submission to userMailchimpStatusQueue for processing by mb-user-api
         // See issue: https://github.com/DoSomething/mbc-transactional-email/issues/26 and
         // https://github.com/DoSomething/mb-toolbox/issues/54
-
-        $this->messageBroker->sendAck($this->message['payload']);
       }
 
     }
@@ -240,19 +238,19 @@ class MBC_TransactionalEmail_Consumer extends MB_Toolbox_BaseConsumer
       $template = FALSE;
     }
 
+    $templateBits = explode('-', $template);
+    $countryCode = $templateBits[count($templateBits) - 1];
     // Don't apply country code logic to transactional requests that define source
     // A source value suggests user import or other app that doesn't want the
     // default template name generation.
     if (!(isset($message['source']))) {
 
       // mb-campaign-signup-KR
-      $templateBits = explode('-', $template);
-      $countryCode = $templateBits[count($templateBits) - 1];
       if ($this->mbToolbox->isDSAffiliate($countryCode)) {
         $templateName = $template;
       }
       else {
-        $templateName = 'mb-' . str_replace('_', '-', $message['activity']) . '-US';
+        $templateName = 'mb-' . str_replace('_', '-', $message['activity']) . '-GL';
       }
 
       echo '- activity: ' . $message['activity'], PHP_EOL;
@@ -262,6 +260,15 @@ class MBC_TransactionalEmail_Consumer extends MB_Toolbox_BaseConsumer
       $statName = 'mbc-transactional-email: country: ' . $countryCode;
       $this->statHat->ezCount($statName, 1);
 
+    }
+    elseif ($message['application_id'] == 'CGG') {
+      $templateCountries = ['US', 'MX', 'BR'];
+      if (!(in_array($countryCode, $templateCountries))) {
+        $templateName = 'mb-cgg2015-vote-GL';
+      }
+      else {
+        $templateName = $template;
+      }
     }
     else {
       $templateName = $template;
