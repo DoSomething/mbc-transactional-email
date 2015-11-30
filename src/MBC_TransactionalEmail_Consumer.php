@@ -246,7 +246,10 @@ class MBC_TransactionalEmail_Consumer extends MB_Toolbox_BaseConsumer
     if (!(isset($message['source']))) {
 
       // mb-campaign-signup-KR
-      if ($this->mbToolbox->isDSAffiliate($countryCode)) {
+      if ($message['user_country'] == 'US') {
+        $templateName = $template;
+      }
+      elseif ($this->mbToolbox->isDSAffiliate($countryCode)) {
         $templateName = $template;
       }
       else {
