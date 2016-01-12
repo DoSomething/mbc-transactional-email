@@ -72,7 +72,7 @@ class MBC_TransactionalEmail_Consumer extends MB_Toolbox_BaseConsumer
     echo '-------  mbc-transactional-email - MBC_TransactionalEmail_Consumer->consumeTransactionalQueue() - ' . date('j D M Y G:i:s T') . ' START -------', PHP_EOL;
 
     parent::consumeQueue($payload);
-    echo '** Consuming: ' . $this->message['email'], PHP_EOL;
+    $this->logConsumption('email');
 
     if ($this->canProcess()) {
 
@@ -100,8 +100,6 @@ class MBC_TransactionalEmail_Consumer extends MB_Toolbox_BaseConsumer
     // @todo: Throttle the number of consumers running. Based on the number of messages
     // waiting to be processed start / stop consumers. Make "reactive"!
     $queueMessages = parent::queueStatus('transactionalQueue');
-    echo '- queueMessages ready: ' . $queueMessages['ready'], PHP_EOL;
-    echo '- queueMessages unacked: ' . $queueMessages['unacked'], PHP_EOL;
 
     echo '-------  mbc-transactional-email - MBC_TransactionalEmail_Consumer->consumeTransactionalQueue() - ' . date('j D M Y G:i:s T') . ' END -------', PHP_EOL . PHP_EOL;
   }
@@ -124,6 +122,11 @@ class MBC_TransactionalEmail_Consumer extends MB_Toolbox_BaseConsumer
     }
     else {
       $this->message['email'] = filter_var($this->message['email'], FILTER_VALIDATE_EMAIL);
+    }
+
+    if (!(isset($this->message['email_template'])) || !(isset($this->message['email-template']))) {
+      throw new Exception('Template not defined.');
+      return FALSE;
     }
 
     return TRUE;
@@ -186,6 +189,9 @@ class MBC_TransactionalEmail_Consumer extends MB_Toolbox_BaseConsumer
       );
     }
 
+    if (isset($message['email-template'])) {
+      $message['email_template'] = $message['email-template'];
+    }
     $this->template = $this->setTemplateName($message);
   }
 
@@ -223,68 +229,112 @@ class MBC_TransactionalEmail_Consumer extends MB_Toolbox_BaseConsumer
   }
 
   /**
-   * Determine the setting for the template name to send with the transactionamail request.
+   * Determine the value of the template name to send with the transactionamail request.
    *
    * @param array $message
    *   Settings of the message from the consumed queue.
    */
   protected function setTemplateName($message) {
 
-    if (isset($message['email_template'])) {
-      $template = $message['email_template'];
+    switch ($message['activity']) {
+
+      case "user_register":
+      case "user_password":
+
+        // mb-campaign-signup-KR
+        if ($message['user_country'] == 'US') {
+          $templateName = $message['email_template'];
+        }
+        elseif ($this->mbToolbox->isDSAffiliate($countryCode)) {
+          $templateName = $message['email_template'];
+        }
+        else {
+          $templateName = 'mb-' . str_replace('_', '-', $message['activity']) . '-GL';
+        }
+        break;
+
+      case "campaign_signup":
+      case "campaign_reportback":
+
+        switch ($message['campaign_language']) {
+
+          case 'en':
+            if ($message['user_country'] == 'US') {
+              $templateName = 'mb-' . str_replace('_', '-', $message['activity']) . '-US';
+            }
+            else {
+              $templateName = 'mb-' . str_replace('_', '-', $message['activity']) . '-XG';
+            }
+            break;
+
+          case 'en-global':
+            $templateName = 'mb-' . str_replace('_', '-', $message['activity']) . '-XG';
+            break;
+
+          case 'es-mx':
+            $templateName = 'mb-' . str_replace('_', '-', $message['activity']) . '-MX';
+            break;
+
+          case 'pt-br':
+            $templateName = 'mb-' . str_replace('_', '-', $message['activity']) . '-BR';
+            break;
+
+        }
+        break;
+
+      case "vote":
+
+        if ($message['user_country'] != 'US') {
+          $templateName = 'mb-cgg2015-vote-GL';
+        }
+        else {
+          $templateName = 'mb-cgg2015-vote-US';
+        }
+        break;
+
+       default:
+         $templateName = FALSE;
+
     }
-    elseif (isset($message['email-template'])) {
-      $template = $message['email-template'];
+
+    if ($templateName == FALSE) {
+      $statName = 'mbc-transactional-email: Invalid Template';
+      $this->statHat->ezCount($statName, 1);
     }
     else {
-      throw new Exception('Template not defined : ' . print_r($message, TRUE));
-      $template = FALSE;
-    }
-
-    $templateBits = explode('-', $template);
-    $countryCode = $templateBits[count($templateBits) - 1];
-    // Don't apply country code logic to transactional requests that define source
-    // A source value suggests user import or other app that doesn't want the
-    // default template name generation.
-    if (!(isset($message['source']))) {
-
-      // mb-campaign-signup-KR
-      if ($message['user_country'] == 'US') {
-        $templateName = $template;
-      }
-      elseif ($this->mbToolbox->isDSAffiliate($countryCode)) {
-        $templateName = $template;
-      }
-      else {
-        $templateName = 'mb-' . str_replace('_', '-', $message['activity']) . '-GL';
-      }
-
-      echo '- activity: ' . $message['activity'], PHP_EOL;
       $statName = 'mbc-transactional-email: activity: ' . $message['activity'];
       $this->statHat->ezCount($statName, 1);
-      echo '- countryCode: ' . $countryCode, PHP_EOL;
       $statName = 'mbc-transactional-email: country: ' . $countryCode;
       $this->statHat->ezCount($statName, 1);
-
+      $statName = 'mbc-transactional-email: template: ' . $templateName;
+      $this->statHat->ezCount($statName, 1);
     }
-    elseif ($message['application_id'] == 'CGG') {
-      $templateCountries = ['US', 'MX', 'BR'];
-      if (!(in_array($countryCode, $templateCountries))) {
-        $templateName = 'mb-cgg2015-vote-GL';
-      }
-      else {
-        $templateName = $template;
-      }
-    }
-    else {
-      $templateName = $template;
-    }
-
-    echo '- setTemplateName: ' . $templateName, PHP_EOL;
-    $statName = 'mbc-transactional-email: template: ' . $templateName;
-    $this->statHat->ezCount($statName, 1);
 
     return $templateName;
+  }
+
+  /*
+   * logConsumption(): Log the status of processing a specific message element.
+   *
+   * @param string $targetName
+   */
+  protected function logConsumption($targetName = NULL) {
+
+    if ($targetName != NULL) {
+      echo '** Consuming ' . $targetName . ': ' . $this->message[$targetName], PHP_EOL;
+      if (isset($this->message['activity'])) {
+         echo '- activity: ' . $this->message['activity'], PHP_EOL;
+      }
+      if (isset($this->message['user_country'])) {
+         echo '- User country: ' . $this->message['user_country'], PHP_EOL;
+      }
+      if (isset($this->message['campaign_language'])) {
+         echo '- Campaign language: ' . $this->message['campaign_language'], PHP_EOL;
+      }
+      echo PHP_EOL;
+    } else {
+      echo $targetName . ' is not defined.', PHP_EOL;
+    }
   }
 
 }
