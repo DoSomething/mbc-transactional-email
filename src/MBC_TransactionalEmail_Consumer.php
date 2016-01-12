@@ -124,7 +124,7 @@ class MBC_TransactionalEmail_Consumer extends MB_Toolbox_BaseConsumer
       $this->message['email'] = filter_var($this->message['email'], FILTER_VALIDATE_EMAIL);
     }
 
-    if (!(isset($this->message['email_template'])) || !(isset($this->message['email-template']))) {
+    if (!(isset($this->message['email_template'])) && !(isset($this->message['email-template']))) {
       throw new Exception('Template not defined.');
       return FALSE;
     }
@@ -256,10 +256,10 @@ class MBC_TransactionalEmail_Consumer extends MB_Toolbox_BaseConsumer
       case "campaign_signup":
       case "campaign_reportback":
 
-        switch ($message['campaign_language']) {
+        switch (strtolower($message['campaign_language'])) {
 
           case 'en':
-            if ($message['user_country'] == 'US') {
+            if (strtoupper($message['user_country']) == 'US') {
               $templateName = 'mb-' . str_replace('_', '-', $message['activity']) . '-US';
             }
             else {
@@ -284,11 +284,11 @@ class MBC_TransactionalEmail_Consumer extends MB_Toolbox_BaseConsumer
 
       case "vote":
 
-        if ($message['user_country'] != 'US') {
-          $templateName = 'mb-cgg2015-vote-GL';
+        if (strtoupper($message['user_country']) == 'US') {
+          $templateName = 'mb-cgg-vote-US';
         }
         else {
-          $templateName = 'mb-cgg2015-vote-US';
+          $templateName = 'mb-cgg-vote-XG';
         }
         break;
 
