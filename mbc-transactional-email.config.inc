@@ -35,12 +35,10 @@ $mbConfig->setProperty('generalSettings', [
     'name' => $generalSettings->email->name,
   ]
 ]);
-
 $mbConfig->setProperty('statHat', new StatHat([
   'ez_key' => getenv("STATHAT_EZKEY"),
   'debug' => getenv("DISABLE_STAT_TRACKING")
 ]));
-
 $mbConfig->setProperty('rabbit_credentials', [
   'host' =>  getenv("RABBITMQ_HOST"),
   'port' => getenv("RABBITMQ_PORT"),
@@ -56,12 +54,9 @@ $mbConfig->setProperty('rabbitapi_credentials', [
 ]);
 
 // Create connection to exchange and queue for processing of queue contents.
-$mbRabbitConfig = $mbConfig->constructRabbitConfig('transactionalExchange', array('transactionalQueue'));
-$mbConfig->setProperty('messageBroker_config', $mbRabbitConfig);
-
 $rabbitCredentials = $mbConfig->getProperty('rabbit_credentials');
-$messageBrokerConfig = $mbConfig->getProperty('messageBroker_config');
-$mbConfig->setProperty('messageBroker', new MessageBroker($rabbitCredentials, $messageBrokerConfig));
+$mbRabbitConfig = $mbConfig->constructRabbitConfig('transactionalExchange', array('transactionalQueue'));
+$mbConfig->setProperty('messageBroker', new MessageBroker($rabbitCredentials, $mbRabbitConfig));
 
 $mbConfig->setProperty('mbRabbitMQManagementAPI', new MB_RabbitMQManagementAPI([
   'domain' => getenv("MB_RABBITMQ_MANAGEMENT_API_HOST"),
