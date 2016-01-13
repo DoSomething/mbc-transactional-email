@@ -189,6 +189,9 @@ class MBC_TransactionalEmail_Consumer extends MB_Toolbox_BaseConsumer
       );
     }
 
+    // Needed to support email-template rather than email_template.
+    // Product of a legacy bug / non-standard var name in various other producer apps that
+    // send messages to this consumer.
     if (isset($message['email-template'])) {
       $message['email_template'] = $message['email-template'];
     }
