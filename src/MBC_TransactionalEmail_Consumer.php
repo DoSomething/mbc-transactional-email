@@ -111,7 +111,7 @@ class MBC_TransactionalEmail_Consumer extends MB_Toolbox_BaseConsumer
    */
   protected function canProcess() {
     
-    if (!(isset($this->message['email']))) {
+    if (empty($this->message['email'])) {
       echo '- canProcess(), email not set.', PHP_EOL;
       return FALSE;
     }
@@ -124,7 +124,7 @@ class MBC_TransactionalEmail_Consumer extends MB_Toolbox_BaseConsumer
       $this->message['email'] = filter_var($this->message['email'], FILTER_VALIDATE_EMAIL);
     }
 
-    if (!(isset($this->message['email_template'])) && !(isset($this->message['email-template']))) {
+    if (empty($this->message['email_template']) && empty($this->message['email-template'])) {
       throw new Exception('Template not defined.');
       return FALSE;
     }
