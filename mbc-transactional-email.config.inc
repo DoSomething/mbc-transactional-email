@@ -55,7 +55,7 @@ $mbConfig->setProperty('rabbitapi_credentials', [
 
 // Create connection to exchange and queue for processing of queue contents.
 $rabbitCredentials = $mbConfig->getProperty('rabbit_credentials');
-$mbRabbitConfig = $mbConfig->constructRabbitConfig('transactionalExchange', array('transactionalQueue'));
+$mbRabbitConfig = $mbConfig->constructRabbitConfig('transactionalExchange', ['transactionalQueue']);
 $mbConfig->setProperty('messageBroker', new MessageBroker($rabbitCredentials, $mbRabbitConfig));
 
 $mbConfig->setProperty('mbRabbitMQManagementAPI', new MB_RabbitMQManagementAPI([
