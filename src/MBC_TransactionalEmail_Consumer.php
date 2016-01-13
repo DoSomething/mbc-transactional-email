@@ -113,12 +113,12 @@ class MBC_TransactionalEmail_Consumer extends MB_Toolbox_BaseConsumer
     
     if (empty($this->message['email'])) {
       echo '- canProcess(), email not set.', PHP_EOL;
-      return FALSE;
+      return false;
     }
 
    if (filter_var($this->message['email'], FILTER_VALIDATE_EMAIL) === false) {
       echo '- canProcess(), failed FILTER_VALIDATE_EMAIL: ' . $this->message['email'], PHP_EOL;
-      return FALSE;
+      return false;
     }
     else {
       $this->message['email'] = filter_var($this->message['email'], FILTER_VALIDATE_EMAIL);
@@ -126,10 +126,10 @@ class MBC_TransactionalEmail_Consumer extends MB_Toolbox_BaseConsumer
 
     if (empty($this->message['email_template']) && empty($this->message['email-template'])) {
       throw new Exception('Template not defined.');
-      return FALSE;
+      return false;
     }
 
-    return TRUE;
+    return true;
   }
 
   /**
@@ -214,7 +214,7 @@ class MBC_TransactionalEmail_Consumer extends MB_Toolbox_BaseConsumer
 
     $statName = 'mbc-transactional-email: Mandrill ';
     if (isset($mandrillResults[0]['reject_reason']) && $mandrillResults[0]['reject_reason'] != NULL) {
-      throw new Exception(print_r($mandrillResults[0], TRUE));
+      throw new Exception(print_r($mandrillResults[0], true));
       $statName .= 'Error: ' . $mandrillResults[0]['reject_reason'];
     }
     elseif (isset($mandrillResults[0]['status']) && $mandrillResults[0]['status'] != 'error') {
@@ -293,11 +293,11 @@ class MBC_TransactionalEmail_Consumer extends MB_Toolbox_BaseConsumer
         break;
 
        default:
-         $templateName = FALSE;
+         $templateName = false;
 
     }
 
-    if ($templateName == FALSE) {
+    if ($templateName == false) {
       $statName = 'mbc-transactional-email: Invalid Template';
       $this->statHat->ezCount($statName, 1);
     }
