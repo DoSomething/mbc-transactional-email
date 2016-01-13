@@ -235,6 +235,10 @@ class MBC_TransactionalEmail_Consumer extends MB_Toolbox_BaseConsumer
    *   Settings of the message from the consumed queue.
    */
   protected function setTemplateName($message) {
+   
+    $activity = str_replace('_', '-', $message['activity']);
+    $userCountry = strtoupper($message['user_country']);
+    $campaignLanguage = strtolower($message['campaign_language']);
 
     switch ($message['activity']) {
 
@@ -242,41 +246,41 @@ class MBC_TransactionalEmail_Consumer extends MB_Toolbox_BaseConsumer
       case "user_password":
 
         // mb-campaign-signup-KR
-        if ($message['user_country'] == 'US') {
+        if ($message['user_country'] === 'US') {
           $templateName = $message['email_template'];
         }
         elseif ($this->mbToolbox->isDSAffiliate($countryCode)) {
           $templateName = $message['email_template'];
         }
         else {
-          $templateName = 'mb-' . str_replace('_', '-', $message['activity']) . '-GL';
+          $templateName = 'mb-' . $activity . '-GL';
         }
         break;
 
       case "campaign_signup":
       case "campaign_reportback":
 
-        switch (strtolower($message['campaign_language'])) {
+        switch ($campaignLanguage) {
 
           case 'en':
-            if (strtoupper($message['user_country']) == 'US') {
-              $templateName = 'mb-' . str_replace('_', '-', $message['activity']) . '-US';
+            if ($userCountry === 'US') {
+              $templateName = 'mb-' . $activity . '-US';
             }
             else {
-              $templateName = 'mb-' . str_replace('_', '-', $message['activity']) . '-XG';
+              $templateName = 'mb-' . $activity . '-XG';
             }
             break;
 
           case 'en-global':
-            $templateName = 'mb-' . str_replace('_', '-', $message['activity']) . '-XG';
+            $templateName = 'mb-' . $activity . '-XG';
             break;
 
           case 'es-mx':
-            $templateName = 'mb-' . str_replace('_', '-', $message['activity']) . '-MX';
+            $templateName = 'mb-' . $activity . '-MX';
             break;
 
           case 'pt-br':
-            $templateName = 'mb-' . str_replace('_', '-', $message['activity']) . '-BR';
+            $templateName = 'mb-' . $activity . '-BR';
             break;
 
         }
@@ -284,7 +288,7 @@ class MBC_TransactionalEmail_Consumer extends MB_Toolbox_BaseConsumer
 
       case "vote":
 
-        if (strtoupper($message['user_country']) == 'US') {
+        if ($userCountry === 'US') {
           $templateName = 'mb-cgg-vote-US';
         }
         else {
