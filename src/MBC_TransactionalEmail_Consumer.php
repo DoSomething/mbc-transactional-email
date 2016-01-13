@@ -302,7 +302,7 @@ class MBC_TransactionalEmail_Consumer extends MB_Toolbox_BaseConsumer
 
     endswitch;
 
-    if ($templateName == false) {
+    if (!$templateName) {
       $statName = 'mbc-transactional-email: Invalid Template';
       $this->statHat->ezCount($statName, 1);
     }
@@ -325,21 +325,20 @@ class MBC_TransactionalEmail_Consumer extends MB_Toolbox_BaseConsumer
    */
   protected function logConsumption($targetName = NULL) {
 
-    if ($targetName != NULL) {
-      echo '** Consuming ' . $targetName . ': ' . $this->message[$targetName], PHP_EOL;
-      if (isset($this->message['activity'])) {
-         echo '- activity: ' . $this->message['activity'], PHP_EOL;
-      }
-      if (isset($this->message['user_country'])) {
-         echo '- User country: ' . $this->message['user_country'], PHP_EOL;
-      }
-      if (isset($this->message['campaign_language'])) {
-         echo '- Campaign language: ' . $this->message['campaign_language'], PHP_EOL;
-      }
-      echo PHP_EOL;
-    } else {
+    if (is_null($targetName)) {
       echo $targetName . ' is not defined.', PHP_EOL;
     }
-  }
 
+    echo '** Consuming ' . $targetName . ': ' . $this->message[$targetName], PHP_EOL;
+    if (isset($this->message['activity'])) {
+       echo '- activity: ' . $this->message['activity'], PHP_EOL;
+    }
+    if (isset($this->message['user_country'])) {
+       echo '- User country: ' . $this->message['user_country'], PHP_EOL;
+    }
+    if (isset($this->message['campaign_language'])) {
+       echo '- Campaign language: ' . $this->message['campaign_language'], PHP_EOL;
+    }
+    echo PHP_EOL;
+  }
 }
