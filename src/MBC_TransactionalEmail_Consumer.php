@@ -235,12 +235,12 @@ class MBC_TransactionalEmail_Consumer extends MB_Toolbox_BaseConsumer
    *   Settings of the message from the consumed queue.
    */
   protected function setTemplateName($message) {
-   
+
     $activity = str_replace('_', '-', $message['activity']);
     $userCountry = strtoupper($message['user_country']);
     $campaignLanguage = strtolower($message['campaign_language']);
 
-    switch ($message['activity']) {
+    switch ($message['activity']):
 
       case "user_register":
       case "user_password":
@@ -260,7 +260,7 @@ class MBC_TransactionalEmail_Consumer extends MB_Toolbox_BaseConsumer
       case "campaign_signup":
       case "campaign_reportback":
 
-        switch ($campaignLanguage) {
+        switch ($campaignLanguage):
 
           case 'en':
             if ($userCountry === 'US') {
@@ -283,7 +283,7 @@ class MBC_TransactionalEmail_Consumer extends MB_Toolbox_BaseConsumer
             $templateName = 'mb-' . $activity . '-BR';
             break;
 
-        }
+        endswitch;
         break;
 
       case "vote":
@@ -298,8 +298,9 @@ class MBC_TransactionalEmail_Consumer extends MB_Toolbox_BaseConsumer
 
        default:
          $templateName = false;
+         break;
 
-    }
+    endswitch;
 
     if ($templateName == false) {
       $statName = 'mbc-transactional-email: Invalid Template';
