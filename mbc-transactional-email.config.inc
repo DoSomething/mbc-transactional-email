@@ -28,7 +28,7 @@ $mbConfig = MB_Configuration::getInstance();
 $generalSettings = $mbConfig->gatherSettings('general');
 $mbConfig->setProperty('generalSettings', [
   'default' => [
-  'first_name' => $generalSettings->default->first_name
+    'first_name' => $generalSettings->default->first_name
   ],
   'email' => [
     'from' => $generalSettings->email->from,
@@ -57,6 +57,8 @@ $mbConfig->setProperty('rabbitapi_credentials', [
 $rabbitCredentials = $mbConfig->getProperty('rabbit_credentials');
 $mbRabbitConfig = $mbConfig->constructRabbitConfig('transactionalExchange', ['transactionalQueue']);
 $mbConfig->setProperty('messageBroker', new MessageBroker($rabbitCredentials, $mbRabbitConfig));
+$mbRabbitConfig_Subscribes = $mbConfig->constructRabbitConfig('transactionalExchange', ['userMailchimpStatusQueue']);
+$mbConfig->setProperty('messageBroker_Subscribes', new MessageBroker($rabbitCredentials, $mbRabbitConfig_Subscribes));
 
 $mbConfig->setProperty('mbRabbitMQManagementAPI', new MB_RabbitMQManagementAPI([
   'domain' => getenv("MB_RABBITMQ_MANAGEMENT_API_HOST"),
