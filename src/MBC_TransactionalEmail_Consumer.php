@@ -261,11 +261,13 @@ class MBC_TransactionalEmail_Consumer extends MB_Toolbox_BaseConsumer
   protected function setTemplateName($message) {
 
     $activity = str_replace('_', '-', $message['activity']);
+    $userCountry = null;
     if (isset($message['user_country'])) {
       $userCountry = strtoupper($message['user_country']);
     }
+    $campaignLanguage = null;
     if (isset($message['campaign_language'])) {
-      $userCountry = strtoupper($message['campaign_language']);
+      $campaignLanguage = strtoupper($message['campaign_language']);
     }
 
     switch ($message['activity']):
