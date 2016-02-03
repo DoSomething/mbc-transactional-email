@@ -261,13 +261,13 @@ class MBC_TransactionalEmail_Consumer extends MB_Toolbox_BaseConsumer
   protected function setTemplateName($message) {
 
     $activity = str_replace('_', '-', $message['activity']);
-    $userCountry = null;
+    $userCountry = '';
     if (isset($message['user_country'])) {
       $userCountry = strtoupper($message['user_country']);
     }
-    $campaignLanguage = null;
+    $campaignLanguage = '';
     if (isset($message['campaign_language'])) {
-      $campaignLanguage = strtoupper($message['campaign_language']);
+      $campaignLanguage = strtolower($message['campaign_language']);
     }
 
     switch ($message['activity']):
@@ -279,7 +279,7 @@ class MBC_TransactionalEmail_Consumer extends MB_Toolbox_BaseConsumer
         if ($message['user_country'] === 'US') {
           $templateName = $message['email_template'];
         }
-        elseif ($this->mbToolbox->isDSAffiliate($countryCode)) {
+        elseif ($this->mbToolbox->isDSAffiliate($userCountry)) {
           $templateName = $message['email_template'];
         }
         else {
@@ -326,6 +326,12 @@ class MBC_TransactionalEmail_Consumer extends MB_Toolbox_BaseConsumer
         }
         break;
 
+       case "user_password-niche":
+       case "user_welcome-niche":
+
+         $templateName = $message['email_template'];
+         break;
+
        default:
          $templateName = false;
          break;
@@ -339,7 +345,7 @@ class MBC_TransactionalEmail_Consumer extends MB_Toolbox_BaseConsumer
     else {
       $statName = 'mbc-transactional-email: activity: ' . $message['activity'];
       $this->statHat->ezCount($statName, 1);
-      $statName = 'mbc-transactional-email: country: ' . $countryCode;
+      $statName = 'mbc-transactional-email: country: ' . $userCountry;
       $this->statHat->ezCount($statName, 1);
       $statName = 'mbc-transactional-email: template: ' . $templateName;
       $this->statHat->ezCount($statName, 1);
