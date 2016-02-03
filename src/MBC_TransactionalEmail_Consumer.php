@@ -41,13 +41,23 @@ class MBC_TransactionalEmail_Consumer extends MB_Toolbox_BaseConsumer
   protected $mandrill;
 
   /**
+   * Message Broker connection to send messages to disable/ban user
+   * documents via mb-user-api.
+   *
+   * @var object $messageBroker_Subscribes
+   */
+  protected $messageBroker_Subscribes;
+
+  /**
    * Compiled values for generation of message request to email service
+   *
    * @var array $request
    */
   protected $request;
 
   /**
    * The name of the Madrill template to format the message with.
+   *
    * @var array $template
    */
   protected $template;
@@ -60,6 +70,7 @@ class MBC_TransactionalEmail_Consumer extends MB_Toolbox_BaseConsumer
    parent::__construct();
    $this->mbToolbox = $this->mbConfig->getProperty('mbToolbox');
    $this->mandrill = $this->mbConfig->getProperty('mandrill');
+   $this->messageBroker_Subscribes = $this->mbConfig->getProperty('messageBroker_Subscribes');
   }
 
   /**
@@ -83,11 +94,6 @@ class MBC_TransactionalEmail_Consumer extends MB_Toolbox_BaseConsumer
       catch(Exception $e) {
         echo 'Error sending transactional email to: ' . $this->message['email'] . '. Error: ' . $e->getMessage() . PHP_EOL;
         $errorDetails = $e->getMessage();
- 
-        // @todo: Send error submission to userMailchimpStatusQueue for processing by mb-user-api
-        // See issue: https://github.com/DoSomething/mbc-transactional-email/issues/26 and
-        // https://github.com/DoSomething/mb-toolbox/issues/54
-        // For now, toos the message
         $this->messageBroker->sendAck($this->message['payload']);
       }
 
@@ -217,8 +223,23 @@ class MBC_TransactionalEmail_Consumer extends MB_Toolbox_BaseConsumer
 
     $statName = 'mbc-transactional-email: Mandrill ';
     if (isset($mandrillResults[0]['reject_reason']) && $mandrillResults[0]['reject_reason'] != NULL) {
-      throw new Exception(print_r($mandrillResults[0], true));
       $statName .= 'Error: ' . $mandrillResults[0]['reject_reason'];
+      if (strpos($mandrillResults[0]['reject_reason'], '500 Internal Server Error') || strpos($mandrillResults[0]['reject_reason'], '502 Bad Gateway')) {
+          sleep(30);
+          $this->messageBroker->sendNack($this->message['payload']);
+        }
+        else {
+
+          $errorDetails = [
+            'email' => $mandrillResults[0]['email'],
+            'error' => $mandrillResults[0]['reject_reason'],
+            'code' => '000'
+          ];
+          $payload = serialize($errorDetails);
+          $this->messageBroker->publish($payload, 'user.mailchimp.error');
+
+          throw new Exception(print_r($mandrillResults[0], true));
+        }
     }
     elseif (isset($mandrillResults[0]['status']) && $mandrillResults[0]['status'] != 'error') {
       echo '-> mbc-transactional-email Mandrill message sent: ' . $this->request['to'][0]['email'] . ' - ' . date('D M j G:i:s T Y'), PHP_EOL;
