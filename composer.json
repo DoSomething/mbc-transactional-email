@@ -37,14 +37,8 @@
       "git checkout master",
       "git pull"
     ],
-    "post-package-update": [
-      "./vendor/bin/phpunit tests"
-    ],
     "post-package-uninstall": [
       "./bin/uninstall.sh"
-    ],
-    "post-install-cmd": [
-      "./vendor/bin/phpunit tests"
     ]
   }
 }

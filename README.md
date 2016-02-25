@@ -37,3 +37,16 @@ Before deploying to production, don't forget to optimize the autoloader
 
 Exclude development packages
 - `composer install --no-dev`
+
+## Docker
+### Running mbc-transactional-email in Docker container
+First of all, you need to obtain `mb-secure-config`.  
+Let's say, it is saved to `$HOME/Development/mb/mb-secure-config/docker-dev/mb-secure-config.inc`.
+
+
+Then you can start the consumer with:  
+`docker run -v $HOME/Development/mb/mb-secure-config/docker-dev/mb-secure-config.inc:/usr/src/mb/messagebroker-config/mb-secure-config.inc:ro -d --name=mbc-transactional-email dosomething/mbc-transactional-email:latest`
+
+
+### Building images with Docker
+`docker build --build-arg COMPOSER_GITHUB_TOKEN=your_github_token -t dosomething/mbc-transactional-email:latest .`
