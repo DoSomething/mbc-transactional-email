@@ -98,6 +98,10 @@ class MBC_TransactionalEmail_Consumer extends MB_Toolbox_BaseConsumer
       }
 
     }
+    elseif (empty($this->message['email'])) {
+      echo '- failed canProcess(), email not defined. Removing from queue.', PHP_EOL;
+      $this->messageBroker->sendAck($this->message['payload']);
+    }
     else {
       echo '- ' . $this->message['email'] . ' failed canProcess(), removing from queue.', PHP_EOL;
       $this->messageBroker->sendAck($this->message['payload']);
