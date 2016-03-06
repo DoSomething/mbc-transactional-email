@@ -376,11 +376,6 @@ class MBC_TransactionalEmail_Consumer extends MB_Toolbox_BaseConsumer
    */
   protected function logConsumption($targetName = NULL) {
 
-    if (is_null($targetName)) {
-      echo $targetName . ' is not defined.', PHP_EOL;
-      throw new Exception($targetName . ' is not defined.');
-    }
-
     echo '** Consuming ' . $targetName . ': ' . $this->message[$targetName], PHP_EOL;
     if (isset($this->message['activity'])) {
        echo '- activity: ' . $this->message['activity'], PHP_EOL;
