@@ -270,7 +270,7 @@ class MBC_TransactionalEmail_Consumer extends MB_Toolbox_BaseConsumer
       $userCountry = strtoupper($message['user_country']);
     }
     if (empty($userCountry) && isset($message['email_template'])) {
-      $userCountry = $this->mbToolbox->countryFromTemplateName($message['email_template']);
+      $userCountry = strtoupper($this->mbToolbox->countryFromTemplateName($message['email_template']));
     }
     $campaignLanguage = '';
     if (isset($message['campaign_language'])) {
