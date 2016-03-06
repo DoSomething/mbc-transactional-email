@@ -313,6 +313,17 @@ class MBC_TransactionalEmail_Consumer extends MB_Toolbox_BaseConsumer
             $templateName = 'mb-' . $activity . '-BR';
             break;
 
+          default:
+
+            // Support old affiliate mulitsites that don't send user or campaign language details.
+            if ($this->mbToolbox->isDSAffiliate($userCountry)) {
+              $templateName = $message['email_template'];
+            }
+            else {
+              $templateName = 'mb-' . $activity . '-GL';
+            }
+           break;
+
         endswitch;
         break;
 
