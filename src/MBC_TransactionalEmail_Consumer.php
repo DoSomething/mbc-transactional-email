@@ -83,11 +83,11 @@ class MBC_TransactionalEmail_Consumer extends MB_Toolbox_BaseConsumer
     echo '-------  mbc-transactional-email - MBC_TransactionalEmail_Consumer->consumeTransactionalQueue() - ' . date('j D M Y G:i:s T') . ' START -------', PHP_EOL;
 
     parent::consumeQueue($payload);
-    $this->logConsumption('email');
 
     if ($this->canProcess()) {
 
       try {
+        $this->logConsumption('email');
         $this->setter($this->message);
         $this->process();
       }
@@ -378,23 +378,20 @@ class MBC_TransactionalEmail_Consumer extends MB_Toolbox_BaseConsumer
 
     if (is_null($targetName)) {
       echo $targetName . ' is not defined.', PHP_EOL;
+      throw new Exception($targetName . ' is not defined.');
     }
 
-    if (isset($this->message[$targetName])) {
-      echo '** Consuming ' . $targetName . ': ' . $this->message[$targetName], PHP_EOL;
-      if (isset($this->message['activity'])) {
-         echo '- activity: ' . $this->message['activity'], PHP_EOL;
-      }
-      if (isset($this->message['user_country'])) {
-         echo '- User country: ' . $this->message['user_country'], PHP_EOL;
-      }
-      if (isset($this->message['campaign_language'])) {
-         echo '- Campaign language: ' . $this->message['campaign_language'], PHP_EOL;
-      }
+    echo '** Consuming ' . $targetName . ': ' . $this->message[$targetName], PHP_EOL;
+    if (isset($this->message['activity'])) {
+       echo '- activity: ' . $this->message['activity'], PHP_EOL;
     }
-    else {
-      echo $targetName . ' not defined in message, skipping.', PHP_EOL;
+    if (isset($this->message['user_country'])) {
+       echo '- User country: ' . $this->message['user_country'], PHP_EOL;
     }
+    if (isset($this->message['campaign_language'])) {
+       echo '- Campaign language: ' . $this->message['campaign_language'], PHP_EOL;
+    }
+
     echo PHP_EOL;
   }
 }
