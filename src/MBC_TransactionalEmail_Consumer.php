@@ -350,6 +350,11 @@ class MBC_TransactionalEmail_Consumer extends MB_Toolbox_BaseConsumer
          $templateName = $message['email_template'];
          break;
 
+       case "mb-reports":
+
+        $templateName = $message['email_template'];
+        break;
+
        default:
          $templateName = false;
          break;
