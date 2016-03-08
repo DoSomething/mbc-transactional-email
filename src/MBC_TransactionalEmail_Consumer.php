@@ -84,27 +84,35 @@ class MBC_TransactionalEmail_Consumer extends MB_Toolbox_BaseConsumer
 
     parent::consumeQueue($payload);
 
-    if ($this->canProcess()) {
+    try {
 
-      try {
+      if ($this->canProcess()) {
         $this->logConsumption('email');
         $this->setter($this->message);
         $this->process();
       }
-      catch(Exception $e) {
-        echo 'Error sending transactional email to: ' . $this->message['email'] . '. Error: ' . $e->getMessage() . PHP_EOL;
-        $errorDetails = $e->getMessage();
+      elseif (empty($this->message['email'])) {
+        echo '- failed canProcess(), email not defined. Removing from queue.', PHP_EOL;
+        $this->messageBroker->sendAck($this->message['payload']);
+      }
+      else {
+        echo '- ' . $this->message['email'] . ' failed canProcess(), removing from queue.', PHP_EOL;
         $this->messageBroker->sendAck($this->message['payload']);
       }
 
     }
-    elseif (empty($this->message['email'])) {
-      echo '- failed canProcess(), email not defined. Removing from queue.', PHP_EOL;
-      $this->messageBroker->sendAck($this->message['payload']);
-    }
-    else {
-      echo '- ' . $this->message['email'] . ' failed canProcess(), removing from queue.', PHP_EOL;
-      $this->messageBroker->sendAck($this->message['payload']);
+    catch(Exception $e) {
+
+      if (strpos($e->getMessage(), 'Template not defined') !== false) {
+        echo '**ALERT: ' . $e->getMessage(), PHP_EOL;
+        parent::deadLetter($this->message, 'MBC_TransactionalEmail_Consumer->consumeTransactionalQueue() Error', $e->getMessage());
+        $this->messageBroker->sendAck($this->message['payload']);
+      }
+      else {
+        echo 'Error sending transactional email to: ' . $this->message['email'] . '. Error: ' . $e->getMessage() . PHP_EOL;
+        $errorDetails = $e->getMessage();
+        $this->messageBroker->sendAck($this->message['payload']);
+      }
     }
 
     // @todo: Throttle the number of consumers running. Based on the number of messages
