@@ -37,3 +37,10 @@ Before deploying to production, don't forget to optimize the autoloader
 
 Exclude development packages
 - `composer install --no-dev`
+
+####Architecture Diagram
+An example transactional event ("`user_registration`") that includes the `mbc-transactional-email` application as a consumer. This consumer consumes messages from the `transactionalQueue` to generate cURL requests to the Mandrill API to generate an email message.
+
+![User Registration Transaction message flow](https://raw.githubusercontent.com/DoSomething/mbc-transactional-email/master/resources/DoSomethingUserRegistration_Architecture.png)
+
+This diagram source can be found in `/resources` as an XML file created using [Draw.io](http://draw.io).
