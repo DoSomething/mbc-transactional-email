@@ -344,11 +344,11 @@ class MBC_TransactionalEmail_Consumer extends MB_Toolbox_BaseConsumer
 
       case "vote":
 
-        if ($userCountry === 'US') {
-          $templateName = 'mb-cgg-vote-US';
+        if (isset($message['email_template'])) {
+          $templateName = $message['email_template'];
         }
-        else {
-          $templateName = 'mb-cgg-vote-XG';
+        elseif (isset($message['application_id']) && isset($userCountry)) {
+          $templateName = 'mb-' . $message['application_id'] . '-vote-' . $userCountry;
         }
         break;
 
