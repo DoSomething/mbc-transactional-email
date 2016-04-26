@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<phpdoc>
+  <parser>
+    <title><![CDATA[<b>mbc-transactional-email</b> Application]]></title>
+    <encoding>utf8</encoding>
+    <markers>
+      <item>TODO</item>
+      <item>FIXME</item>
+    </markers>
+  </parser>
+  <transformer>
+    <target>docs</target>
+    <template name="clean"/>
+  </transformer>
+  <files>
+  <file>mbc-transactional-email.php</file>
+  <file>mbc-transactional-email.config.inc</file>
+  <directory>bin</directory>
+  <directory>src</directory>
+  <ignore>vendor/*</ignore>
+</files>
+</phpdoc>

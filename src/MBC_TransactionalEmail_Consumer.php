@@ -347,8 +347,14 @@ class MBC_TransactionalEmail_Consumer extends MB_Toolbox_BaseConsumer
         if (isset($message['email_template'])) {
           $templateName = $message['email_template'];
         }
-        elseif (isset($message['application_id']) && isset($userCountry)) {
+        elseif (isset($message['application_id']) && isset($userCountry) && $this->mbToolbox->isDSAffiliate($userCountry)) {
           $templateName = 'mb-' . $message['application_id'] . '-vote-' . $userCountry;
+        }
+        elseif (isset($message['application_id'])) {
+          $templateName = 'mb-' . $message['application_id'] . '-vote-XG';
+        }
+        else {
+          $templateName = false;
         }
         break;
 
