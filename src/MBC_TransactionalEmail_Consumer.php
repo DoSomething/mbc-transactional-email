@@ -342,6 +342,17 @@ class MBC_TransactionalEmail_Consumer extends MB_Toolbox_BaseConsumer
         endswitch;
         break;
 
+      case "campaign_signup_digest":
+
+        if (isset($message['email_template'])) {
+          $templateName = $message['email_template'];
+        }
+        else {
+          $templateName = false;
+        }
+
+        break;
+
       case "vote":
 
         if (isset($message['email_template'])) {
@@ -358,13 +369,13 @@ class MBC_TransactionalEmail_Consumer extends MB_Toolbox_BaseConsumer
         }
         break;
 
-       case "user_password-niche":
-       case "user_welcome-niche":
+      case "user_password-niche":
+      case "user_welcome-niche":
 
          $templateName = $message['email_template'];
          break;
 
-       case "mb-reports":
+      case "mb-reports":
 
         $templateName = $message['email_template'];
         break;
