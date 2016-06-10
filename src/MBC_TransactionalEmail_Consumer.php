@@ -128,6 +128,11 @@ class MBC_TransactionalEmail_Consumer extends MB_Toolbox_BaseConsumer
    * @return boolean
    */
   protected function canProcess() {
+
+    if (isset($this->message['transactionals']) && $this->message['transactionals'] == false) {
+      echo '- canProcess(), transactionals disabled.', PHP_EOL;
+      return false;
+    }
     
     if (empty($this->message['email'])) {
       echo '- canProcess(), email not set.', PHP_EOL;
