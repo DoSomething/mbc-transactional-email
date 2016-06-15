@@ -398,8 +398,6 @@ class MBC_TransactionalEmail_Consumer extends MB_Toolbox_BaseConsumer
     else {
       $statName = 'mbc-transactional-email: activity: ' . $message['activity'];
       $this->statHat->ezCount($statName, 1);
-      $statName = 'mbc-transactional-email: country: ' . $userCountry;
-      $this->statHat->ezCount($statName, 1);
       $statName = 'mbc-transactional-email: template: ' . $templateName;
       $this->statHat->ezCount($statName, 1);
     }
