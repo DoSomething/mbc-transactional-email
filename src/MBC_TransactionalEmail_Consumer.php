@@ -105,7 +105,6 @@ class MBC_TransactionalEmail_Consumer extends MB_Toolbox_BaseConsumer
 
       if (strpos($e->getMessage(), 'Template not defined') !== false) {
         echo '**ALERT: ' . $e->getMessage(), PHP_EOL;
-        parent::deadLetter($this->message, 'MBC_TransactionalEmail_Consumer->consumeTransactionalQueue() Error', $e->getMessage());
         $this->messageBroker->sendAck($this->message['payload']);
       }
       else {
@@ -113,6 +112,7 @@ class MBC_TransactionalEmail_Consumer extends MB_Toolbox_BaseConsumer
         $errorDetails = $e->getMessage();
         $this->messageBroker->sendAck($this->message['payload']);
       }
+      parent::deadLetter($this->message, 'MBC_TransactionalEmail_Consumer->consumeTransactionalQueue() Error', $e->getMessage());
     }
 
     // @todo: Throttle the number of consumers running. Based on the number of messages
