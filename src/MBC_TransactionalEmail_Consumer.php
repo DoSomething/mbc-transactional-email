@@ -102,16 +102,8 @@ class MBC_TransactionalEmail_Consumer extends MB_Toolbox_BaseConsumer
 
     }
     catch(Exception $e) {
-
-      if (strpos($e->getMessage(), 'Template not defined') !== false) {
-        echo '**ALERT: ' . $e->getMessage(), PHP_EOL;
-        $this->messageBroker->sendAck($this->message['payload']);
-      }
-      else {
-        echo 'Error sending transactional email to: ' . $this->message['email'] . '. Error: ' . $e->getMessage() . PHP_EOL;
-        $errorDetails = $e->getMessage();
-        $this->messageBroker->sendAck($this->message['payload']);
-      }
+      echo '**ALERT: ' . $e->getMessage(), PHP_EOL;
+      $this->messageBroker->sendAck($this->message['payload']);
       parent::deadLetter($this->message, 'MBC_TransactionalEmail_Consumer->consumeTransactionalQueue() Error', $e->getMessage());
     }
 
