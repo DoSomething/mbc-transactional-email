@@ -136,6 +136,11 @@ class MBC_TransactionalEmail_Consumer extends MB_Toolbox_BaseConsumer
       return false;
     }
 
+    if (!empty($this->message['activity']) && $this->message['activity'] === 'campaign_signup') {
+      echo '- canProcess(), processing campaign signups is deprecated in favor of mbc-transactional-digest.', PHP_EOL;
+      return false;
+    }
+
    if (filter_var($this->message['email'], FILTER_VALIDATE_EMAIL) === false) {
       echo '- canProcess(), failed FILTER_VALIDATE_EMAIL: ' . $this->message['email'], PHP_EOL;
       return false;
@@ -273,6 +278,13 @@ class MBC_TransactionalEmail_Consumer extends MB_Toolbox_BaseConsumer
    *   Settings of the message from the consumed queue.
    */
   protected function setTemplateName($message) {
+    // `campaign_signup_single` is the fallback to normal email when user activity
+    // isn't qualified for the transactional digest.
+    // However, `campaign_signup_single` should be processed exactly like
+    // the old transactional signup, including template naming.
+    if ($message['activity'] === 'campaign_signup_single') {
+      $message['activity'] = 'campaign_signup';
+    }
 
     $activity = str_replace('_', '-', $message['activity']);
     $userCountry = '';
