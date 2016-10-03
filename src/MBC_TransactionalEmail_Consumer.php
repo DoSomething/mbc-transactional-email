@@ -113,7 +113,7 @@ class MBC_TransactionalEmail_Consumer extends MB_Toolbox_BaseConsumer
 
     echo '-------  mbc-transactional-email - MBC_TransactionalEmail_Consumer->consumeTransactionalQueue() - ' . date('j D M Y G:i:s T') . ' END -------', PHP_EOL . PHP_EOL;
   }
-  
+
   /**
    * Conditions to test before processing the message.
    *
@@ -125,7 +125,7 @@ class MBC_TransactionalEmail_Consumer extends MB_Toolbox_BaseConsumer
       echo '- canProcess(), transactionals disabled.', PHP_EOL;
       return false;
     }
-    
+
     if (empty($this->message['email'])) {
       echo '- canProcess(), email not set.', PHP_EOL;
       return false;
@@ -241,30 +241,47 @@ class MBC_TransactionalEmail_Consumer extends MB_Toolbox_BaseConsumer
     $mandrillResults = $this->mandrill->messages->sendTemplate($this->template, $templateContent, $this->request);
 
     $statName = 'mbc-transactional-email: Mandrill ';
-    if (isset($mandrillResults[0]['reject_reason']) && $mandrillResults[0]['reject_reason'] != NULL) {
-      $statName .= 'Error: ' . $mandrillResults[0]['reject_reason'];
-      if (strpos($mandrillResults[0]['reject_reason'], '500 Internal Server Error') || strpos($mandrillResults[0]['reject_reason'], '502 Bad Gateway')) {
-          sleep(30);
-          $this->messageBroker->sendNack($this->message['payload']);
-        }
-        else {
+    // Rejected with reason.
+    if (!empty($mandrillResults[0]['reject_reason'])) {
+      $rejectReason = &$mandrillResults[0]['reject_reason'];
+      // StatHat graph.
+      $statName .= 'Error: ' . $rejectReason;
 
-          $errorDetails = [
-            'email' => $mandrillResults[0]['email'],
-            'error' => $mandrillResults[0]['reject_reason'],
-            'code' => '000'
-          ];
-          $payload = serialize($errorDetails);
-          $this->messageBroker->publish($payload, 'user.mailchimp.error');
-
-          throw new Exception(print_r($mandrillResults[0], true));
-        }
+      // Parse reject reason:
+      // 1. Retry on remote server errors.
+      if (strpos($rejectReason, '500 Internal Server Error') || strpos($rejectReason, '502 Bad Gateway')) {
+        sleep(30);
+        $this->messageBroker->sendNack($this->message['payload']);
+      }
+      // 2. Ignore hard and soft bounces.
+      elseif ($rejectReason === 'hard-bounce' || $rejectReason === 'soft-bounce') {
+        $this->messageBroker->sendAck($this->message['payload']);
+        echo '** mbc-transactional-email: '
+             . 'Skipping '
+             . $this->request['to'][0]['email']
+             . ', it is rejected as a ' . $rejectReason . '.'
+             . ' - ' . date('D M j G:i:s T Y')
+             . PHP_EOL;
+      }
+      // 3. Throw an exception with reject reason status.
+      else {
+        $errorDetails = [
+          'email' => $mandrillResults[0]['email'],
+          'error' => $rejectReason,
+          'code' => '000'
+        ];
+        $payload = serialize($errorDetails);
+        $this->messageBroker->publish($payload, 'user.mailchimp.error');
+        throw new Exception(print_r($mandrillResults[0], true));
+      }
     }
+    // Accepted.
     elseif (isset($mandrillResults[0]['status']) && $mandrillResults[0]['status'] != 'error') {
       echo '-> mbc-transactional-email Mandrill message sent: ' . $this->request['to'][0]['email'] . ' - ' . date('D M j G:i:s T Y'), PHP_EOL;
       $this->messageBroker->sendAck($this->message['payload']);
       $statName .= 'OK';
     }
+    // Unknown state.
     else {
       $statName .= 'No Confirmation';
     }
