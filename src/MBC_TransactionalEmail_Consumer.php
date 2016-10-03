@@ -244,21 +244,21 @@ class MBC_TransactionalEmail_Consumer extends MB_Toolbox_BaseConsumer
     if (isset($mandrillResults[0]['reject_reason']) && $mandrillResults[0]['reject_reason'] != NULL) {
       $statName .= 'Error: ' . $mandrillResults[0]['reject_reason'];
       if (strpos($mandrillResults[0]['reject_reason'], '500 Internal Server Error') || strpos($mandrillResults[0]['reject_reason'], '502 Bad Gateway')) {
-          sleep(30);
-          $this->messageBroker->sendNack($this->message['payload']);
-        }
-        else {
+        sleep(30);
+        $this->messageBroker->sendNack($this->message['payload']);
+      }
+      else {
 
-          $errorDetails = [
-            'email' => $mandrillResults[0]['email'],
-            'error' => $mandrillResults[0]['reject_reason'],
-            'code' => '000'
-          ];
-          $payload = serialize($errorDetails);
-          $this->messageBroker->publish($payload, 'user.mailchimp.error');
+        $errorDetails = [
+          'email' => $mandrillResults[0]['email'],
+          'error' => $mandrillResults[0]['reject_reason'],
+          'code' => '000'
+        ];
+        $payload = serialize($errorDetails);
+        $this->messageBroker->publish($payload, 'user.mailchimp.error');
 
-          throw new Exception(print_r($mandrillResults[0], true));
-        }
+        throw new Exception(print_r($mandrillResults[0], true));
+      }
     }
     elseif (isset($mandrillResults[0]['status']) && $mandrillResults[0]['status'] != 'error') {
       echo '-> mbc-transactional-email Mandrill message sent: ' . $this->request['to'][0]['email'] . ' - ' . date('D M j G:i:s T Y'), PHP_EOL;
