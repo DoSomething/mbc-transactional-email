@@ -242,7 +242,7 @@ class MBC_TransactionalEmail_Consumer extends MB_Toolbox_BaseConsumer
 
     $statName = 'mbc-transactional-email: Mandrill ';
     // Rejected with reason.
-    if (isset($rejectReason) && $mandrillResults[0]['reject_reason'] != NULL) {
+    if (!empty($mandrillResults[0]['reject_reason'])) {
       $rejectReason = &$mandrillResults[0]['reject_reason'];
       // StatHat graph.
       $statName .= 'Error: ' . $rejectReason;
@@ -253,7 +253,17 @@ class MBC_TransactionalEmail_Consumer extends MB_Toolbox_BaseConsumer
         sleep(30);
         $this->messageBroker->sendNack($this->message['payload']);
       }
-      // 2. Throw an exception with reject reason status.
+      // 2. Ignore hard and soft bounces.
+      elseif ($rejectReason === 'hard-bounce' || $rejectReason === 'soft-bounce') {
+        $this->messageBroker->sendAck($this->message['payload']);
+        echo '** mbc-transactional-email: '
+             . 'Skipping '
+             . $this->request['to'][0]['email']
+             . ', it is rejected as a ' . $rejectReason . '.'
+             . ' - ' . date('D M j G:i:s T Y')
+             . PHP_EOL;
+      }
+      // 3. Throw an exception with reject reason status.
       else {
         $errorDetails = [
           'email' => $mandrillResults[0]['email'],
