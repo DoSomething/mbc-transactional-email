@@ -241,30 +241,37 @@ class MBC_TransactionalEmail_Consumer extends MB_Toolbox_BaseConsumer
     $mandrillResults = $this->mandrill->messages->sendTemplate($this->template, $templateContent, $this->request);
 
     $statName = 'mbc-transactional-email: Mandrill ';
-    if (isset($mandrillResults[0]['reject_reason']) && $mandrillResults[0]['reject_reason'] != NULL) {
-      $statName .= 'Error: ' . $mandrillResults[0]['reject_reason'];
-      if (strpos($mandrillResults[0]['reject_reason'], '500 Internal Server Error') || strpos($mandrillResults[0]['reject_reason'], '502 Bad Gateway')) {
+    // Rejected with reason.
+    if (isset($rejectReason) && $mandrillResults[0]['reject_reason'] != NULL) {
+      $rejectReason = &$mandrillResults[0]['reject_reason'];
+      // StatHat graph.
+      $statName .= 'Error: ' . $rejectReason;
+
+      // Parse reject reason:
+      // 1. Retry on remote server errors.
+      if (strpos($rejectReason, '500 Internal Server Error') || strpos($rejectReason, '502 Bad Gateway')) {
         sleep(30);
         $this->messageBroker->sendNack($this->message['payload']);
       }
+      // 2. Throw an exception with reject reason status.
       else {
-
         $errorDetails = [
           'email' => $mandrillResults[0]['email'],
-          'error' => $mandrillResults[0]['reject_reason'],
+          'error' => $rejectReason,
           'code' => '000'
         ];
         $payload = serialize($errorDetails);
         $this->messageBroker->publish($payload, 'user.mailchimp.error');
-
         throw new Exception(print_r($mandrillResults[0], true));
       }
     }
+    // Accepted.
     elseif (isset($mandrillResults[0]['status']) && $mandrillResults[0]['status'] != 'error') {
       echo '-> mbc-transactional-email Mandrill message sent: ' . $this->request['to'][0]['email'] . ' - ' . date('D M j G:i:s T Y'), PHP_EOL;
       $this->messageBroker->sendAck($this->message['payload']);
       $statName .= 'OK';
     }
+    // Unknown state.
     else {
       $statName .= 'No Confirmation';
     }
