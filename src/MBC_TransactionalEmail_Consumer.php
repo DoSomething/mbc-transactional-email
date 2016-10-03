@@ -113,7 +113,7 @@ class MBC_TransactionalEmail_Consumer extends MB_Toolbox_BaseConsumer
 
     echo '-------  mbc-transactional-email - MBC_TransactionalEmail_Consumer->consumeTransactionalQueue() - ' . date('j D M Y G:i:s T') . ' END -------', PHP_EOL . PHP_EOL;
   }
-  
+
   /**
    * Conditions to test before processing the message.
    *
@@ -125,7 +125,7 @@ class MBC_TransactionalEmail_Consumer extends MB_Toolbox_BaseConsumer
       echo '- canProcess(), transactionals disabled.', PHP_EOL;
       return false;
     }
-    
+
     if (empty($this->message['email'])) {
       echo '- canProcess(), email not set.', PHP_EOL;
       return false;
