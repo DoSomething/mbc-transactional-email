@@ -247,19 +247,25 @@ class MBC_TransactionalEmail_Consumer extends MB_Toolbox_BaseConsumer
       // StatHat graph.
       $statName .= 'Error: ' . $rejectReason;
 
+      $skipRejectReasons = [
+        'hard-bounce',
+        'soft-bounce',
+        'spam',
+      ];
+
       // Parse reject reason:
       // 1. Retry on remote server errors.
       if (strpos($rejectReason, '500 Internal Server Error') || strpos($rejectReason, '502 Bad Gateway')) {
         sleep(30);
         $this->messageBroker->sendNack($this->message['payload']);
       }
-      // 2. Ignore hard and soft bounces.
-      elseif ($rejectReason === 'hard-bounce' || $rejectReason === 'soft-bounce') {
+      // 2. Ignore hard, soft bounces and spam.
+      elseif (in_array($rejectReason, $skipRejectReasons)) {
         $this->messageBroker->sendAck($this->message['payload']);
         echo '** mbc-transactional-email: '
              . 'Skipping '
              . $this->request['to'][0]['email']
-             . ', it is rejected as a ' . $rejectReason . '.'
+             . ', it is rejected as ' . $rejectReason . '.'
              . ' - ' . date('D M j G:i:s T Y')
              . PHP_EOL;
       }
