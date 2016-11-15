@@ -87,8 +87,8 @@ class MBC_TransactionalEmail_Consumer extends MB_Toolbox_BaseConsumer
     try {
 
       if ($this->canProcess()) {
-        $this->logConsumption('email');
         $this->setter($this->message);
+        $this->logConsumption('email');
         $this->process();
       }
       elseif (empty($this->message['email'])) {
@@ -443,18 +443,16 @@ class MBC_TransactionalEmail_Consumer extends MB_Toolbox_BaseConsumer
    * @param string $targetName
    */
   protected function logConsumption($targetName = NULL) {
-
-    echo '** Consuming ' . $targetName . ': ' . $this->message[$targetName], PHP_EOL;
+    echo '** Consuming ' . $targetName . ': ' . $this->message[$targetName] . PHP_EOL;
+    echo '- Template: ' . $this->template . PHP_EOL;
     if (isset($this->message['activity'])) {
-       echo '- activity: ' . $this->message['activity'], PHP_EOL;
+       echo '- Activity: ' . $this->message['activity'] . PHP_EOL;
     }
     if (isset($this->message['user_country'])) {
-       echo '- User country: ' . $this->message['user_country'], PHP_EOL;
+       echo '- User country: ' . $this->message['user_country'] . PHP_EOL;
     }
     if (isset($this->message['campaign_language'])) {
-       echo '- Campaign language: ' . $this->message['campaign_language'], PHP_EOL;
+       echo '- Campaign language: ' . $this->message['campaign_language'] . PHP_EOL;
     }
-
-    echo PHP_EOL;
   }
 }
