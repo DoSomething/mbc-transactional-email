@@ -88,6 +88,7 @@ class MBC_TransactionalEmail_Consumer extends MB_Toolbox_BaseConsumer
 
       if ($this->canProcess()) {
         $this->setter($this->message);
+        // Should be after setter() because template name is resolve in it.
         $this->logConsumption('email');
         $this->process();
       }
