@@ -63,6 +63,22 @@ class MBC_TransactionalEmail_Consumer extends MB_Toolbox_BaseConsumer
   protected $template;
 
   /**
+   * Override campaign signup and reportback templates.
+   *
+   * @var array
+   *   An array in the following format:
+   *     nid => template_suffix
+   */
+  protected $campaignSignupOverrideSuffix = [
+    // Suspended for WHAT?: AMPLIFY
+    // https://www.dosomething.org/us/campaigns/suspended-what-amplify
+    7661 => 'amplify',
+    // Suspended for WHAT?: ADVOCATE
+    // https://www.dosomething.org/us/campaigns/suspended-what-advocate
+    7662 => 'advocate',
+  ];
+
+  /**
    * Extend the base constructor to include loading the Mandrill object.
    */
   public function __construct() {
@@ -138,8 +154,12 @@ class MBC_TransactionalEmail_Consumer extends MB_Toolbox_BaseConsumer
     }
 
     if (!empty($this->message['activity']) && $this->message['activity'] === 'campaign_signup') {
-      echo '- canProcess(), processing campaign signups is deprecated in favor of mbc-transactional-digest.', PHP_EOL;
-      return false;
+      if (!empty($this->message['event_id']) && !empty($this->campaignSignupOverrideSuffix[$this->message['event_id']])) {
+        echo '- processing exceptin campaign signup ' . $this->message['event_id'] . '.' . PHP_EOL;
+      } else {
+        echo '- canProcess(), processing campaign signups is deprecated in favor of mbc-transactional-digest.', PHP_EOL;
+        return false;
+      }
     }
 
    if (filter_var($this->message['email'], FILTER_VALIDATE_EMAIL) === false) {
@@ -378,6 +398,11 @@ class MBC_TransactionalEmail_Consumer extends MB_Toolbox_BaseConsumer
            break;
 
         endswitch;
+
+        // Override template from exceptions array.
+        if (!empty($message['event_id']) && !empty($this->campaignSignupOverrideSuffix[$message['event_id']])) {
+          $templateName .= '-' . $this->campaignSignupOverrideSuffix[$message['event_id']];
+        }
         break;
 
       case "campaign_signup_digest":
