@@ -400,7 +400,9 @@ class MBC_TransactionalEmail_Consumer extends MB_Toolbox_BaseConsumer
         endswitch;
 
         // Override template from exceptions array.
-        if (!empty($message['event_id']) && !empty($this->campaignSignupOverrideSuffix[$message['event_id']])) {
+        if ($userCountry === 'US'
+          && !empty($message['event_id'])
+          && !empty($this->campaignSignupOverrideSuffix[$message['event_id']])) {
           $templateName .= '-' . $this->campaignSignupOverrideSuffix[$message['event_id']];
         }
         break;
