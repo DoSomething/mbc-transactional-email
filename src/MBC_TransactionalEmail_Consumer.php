@@ -368,6 +368,12 @@ class MBC_TransactionalEmail_Consumer extends MB_Toolbox_BaseConsumer
           case 'en':
             if ($userCountry === 'US') {
               $templateName = 'mb-' . $activity . '-US';
+
+              // Override template from exceptions array.
+              $override = !empty($message['event_id']) && !empty($this->campaignSignupOverrideSuffix[$message['event_id']]);
+              if ($override) {
+                $templateName .= '-' . $this->campaignSignupOverrideSuffix[$message['event_id']];
+              }
             }
             else {
               $templateName = 'mb-' . $activity . '-XG';
@@ -399,12 +405,6 @@ class MBC_TransactionalEmail_Consumer extends MB_Toolbox_BaseConsumer
 
         endswitch;
 
-        // Override template from exceptions array.
-        if ($userCountry === 'US'
-          && !empty($message['event_id'])
-          && !empty($this->campaignSignupOverrideSuffix[$message['event_id']])) {
-          $templateName .= '-' . $this->campaignSignupOverrideSuffix[$message['event_id']];
-        }
         break;
 
       case "campaign_signup_digest":
