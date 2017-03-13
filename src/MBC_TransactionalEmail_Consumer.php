@@ -148,8 +148,8 @@ class MBC_TransactionalEmail_Consumer extends MB_Toolbox_BaseConsumer
       return false;
     }
 
-    if (preg_match('/@mobile\.import$/', $this->message['email'])) {
-      echo '- canProcess(), Mobile placeholder address: ' . $this->message['email'], PHP_EOL;
+    if (preg_match('/@.*\.import$/', $this->message['email'])) {
+      echo '- canProcess(), import placeholder address: ' . $this->message['email'], PHP_EOL;
       return false;
     }
 
