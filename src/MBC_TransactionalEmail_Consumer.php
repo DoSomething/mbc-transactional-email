@@ -76,6 +76,9 @@ class MBC_TransactionalEmail_Consumer extends MB_Toolbox_BaseConsumer
     // Suspended for WHAT?: ADVOCATE
     // https://www.dosomething.org/us/campaigns/suspended-what-advocate
     7662 => 'advocate',
+    // Sincerely, Us
+    // https://www.dosomething.org/us/campaigns/sincerely-us
+    7656 => 'sincerely-us',
   ];
 
   /**
