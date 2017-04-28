@@ -79,6 +79,13 @@ class MBC_TransactionalEmail_Consumer extends MB_Toolbox_BaseConsumer
     // Sincerely, Us
     // https://www.dosomething.org/us/campaigns/sincerely-us
     7656 => 'sincerely-us',
+    // Unlock the Truth
+    // https://www.dosomething.org/us/campaigns/uncover-truth
+    7771 => 'uncover-the-truth',
+    // Mirror Messages
+    // https://www.dosomething.org/us/campaigns/mirror-messages
+    7 => 'mirror-messages',
+
   ];
 
   /**
