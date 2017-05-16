@@ -41,14 +41,6 @@ class MBC_TransactionalEmail_Consumer extends MB_Toolbox_BaseConsumer
   protected $mandrill;
 
   /**
-   * Message Broker connection to send messages to disable/ban user
-   * documents via mb-user-api.
-   *
-   * @var object $messageBroker_Subscribes
-   */
-  protected $messageBroker_Subscribes;
-
-  /**
    * Compiled values for generation of message request to email service
    *
    * @var array $request
@@ -96,7 +88,6 @@ class MBC_TransactionalEmail_Consumer extends MB_Toolbox_BaseConsumer
    parent::__construct();
    $this->mbToolbox = $this->mbConfig->getProperty('mbToolbox');
    $this->mandrill = $this->mbConfig->getProperty('mandrill');
-   $this->messageBroker_Subscribes = $this->mbConfig->getProperty('messageBroker_Subscribes');
   }
 
   /**

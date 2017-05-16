@@ -57,8 +57,6 @@ $mbConfig->setProperty('rabbitapi_credentials', [
 $rabbitCredentials = $mbConfig->getProperty('rabbit_credentials');
 $mbRabbitConfig = $mbConfig->constructRabbitConfig('transactionalExchange', ['transactionalQueue']);
 $mbConfig->setProperty('messageBroker', new MessageBroker($rabbitCredentials, $mbRabbitConfig));
-$mbRabbitConfig_Subscribes = $mbConfig->constructRabbitConfig('transactionalExchange', ['userMailchimpStatusQueue']);
-$mbConfig->setProperty('messageBroker_Subscribes', new MessageBroker($rabbitCredentials, $mbRabbitConfig_Subscribes));
 
 $mbRabbitConfig = $mbConfig->constructRabbitConfig('directDeadLetterExchange', ['deadLetterQueue']);
 $mbConfig->setProperty('messageBroker_deadLetter', new MessageBroker($rabbitCredentials, $mbRabbitConfig));
