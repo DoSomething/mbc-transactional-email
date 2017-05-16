@@ -44,3 +44,16 @@ An example transactional event ("`user_registration`") that includes the `mbc-tr
 ![User Registration Transaction message flow](https://raw.githubusercontent.com/DoSomething/mbc-transactional-email/master/resources/DoSomethingUserRegistration_Architecture.png)
 
 This diagram source can be found in `/resources` as an XML file created using [Draw.io](http://draw.io).
+
+## Docker
+### Running mbc-transactional-email in Docker container
+First of all, you need to obtain `mb-secure-config`.  
+Let's say, it is saved to `$HOME/Development/mb/mb-secure-config/docker-dev/mb-secure-config.inc`.
+
+
+Then you can start the consumer with:  
+`docker run -v $HOME/Development/mb/mb-secure-config/docker-dev/mb-secure-config.inc:/usr/src/mb/messagebroker-config/mb-secure-config.inc:ro -d --name=mbc-transactional-email dosomething/mbc-transactional-email:latest`
+
+
+### Building images with Docker
+`docker build --build-arg COMPOSER_GITHUB_TOKEN=your_github_token -t dosomething/mbc-transactional-email:latest .`
