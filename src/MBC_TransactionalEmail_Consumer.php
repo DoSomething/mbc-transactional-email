@@ -163,6 +163,11 @@ class MBC_TransactionalEmail_Consumer extends MB_Toolbox_BaseConsumer
       }
     }
 
+    if (!empty($this->message['activity']) && $this->message['activity'] === 'user_register') {
+      echo '- canProcess(), processing user registrations is deprecated in favor of customer.io.', PHP_EOL;
+      return false;
+    }
+
    if (filter_var($this->message['email'], FILTER_VALIDATE_EMAIL) === false) {
       echo '- canProcess(), failed FILTER_VALIDATE_EMAIL: ' . $this->message['email'], PHP_EOL;
       return false;
@@ -346,7 +351,6 @@ class MBC_TransactionalEmail_Consumer extends MB_Toolbox_BaseConsumer
 
     switch ($message['activity']):
 
-      case "user_register":
       case "user_password":
 
         // mb-campaign-signup-KR
