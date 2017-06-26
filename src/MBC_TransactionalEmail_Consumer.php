@@ -77,7 +77,15 @@ class MBC_TransactionalEmail_Consumer extends MB_Toolbox_BaseConsumer
     // Mirror Messages
     // https://www.dosomething.org/us/campaigns/mirror-messages
     7 => 'mirror-messages',
-
+    // All in We Win
+    // https://www.dosomething.org/us/campaigns/all-we-win
+    7831 => 'all-in-we-win',
+    // Treat Yo Friends
+    // https://www.dosomething.org/us/campaigns/treat-yo-friends
+    5646 => 'treat-yo-friends',
+    // Steps for Soldiers
+    // https://www.dosomething.org/us/campaigns/steps-soldiers
+    7822 => 'steps-for-soldiers',
   ];
 
   /**
