@@ -83,6 +83,9 @@ class MBC_TransactionalEmail_Consumer extends MB_Toolbox_BaseConsumer
     // Steps for Soldiers
     // https://www.dosomething.org/us/campaigns/steps-soldiers
     7822 => 'steps-for-soldiers',
+    // 5 Days, 5 Actions
+    // https://www.dosomething.org/us/campaigns/5-days-5-actions
+    7889 => '5days-5actions',
   ];
 
   /**
